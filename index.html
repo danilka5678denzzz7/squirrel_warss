@@ -202,6 +202,17 @@
             transition: transform 0.05s ease;
             position: relative;
             z-index: 10;
+        
+            /* --- ВОТ РЕШЕНИЕ --- */
+            
+            /* 1. Убирает синюю обводку фокуса (ваш вопрос) */
+            outline: none; 
+            
+            /* 2. Убирает синюю/серую вспышку при тапе на мобильных */
+            -webkit-tap-highlight-color: transparent; 
+            
+            /* 3. Запрещает выделение картинки как текста (на всякий случай) */
+            user-select: none; 
         }
         
         @keyframes clickShake {

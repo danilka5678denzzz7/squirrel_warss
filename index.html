@@ -424,22 +424,16 @@
             text-shadow: none; 
         }
 
+        /* !!! ИСПРАВЛЕНО: Позиционируем кнопку настроек напротив кнопки заданий */
         .settings-button { 
-            position: absolute; 
-            width: 50px; height: 5px; 
-            background: none; border: none; border-radius: 0; 
-            display: flex; 
-            justify-content: center; align-items: center; 
-            cursor: pointer; z-index: 40; 
-            padding: 0; 
-            /* Делаем текст (эмодзи) прозрачным, чтобы видеть только картинку */
-            color: transparent; 
-            text-shadow: none; 
+            top: 20px; /* Выравнивание по верхнему краю (где кнопка заданий) */
+            left: 20px; 
+            right: auto;
         }
+        /* !!! КОНЕЦ ИСПРАВЛЕНИЯ */
 
         .tasks-button { top: 20px; right: 20px; }
         .daily-rewards-button { top: 95px; right: 20px; }
-        .settings-button { top: 20px; left: 20px; right: auto; }
 
         .tasks-button img, .daily-rewards-button img, .settings-button img {
             width: 100%;
@@ -1486,7 +1480,6 @@
 
         
         function SettingsModal({ onClose, musicVolume, onVolumeChange }) { 
-            // !!! УДАЛЕНА ФУНКЦИЯ handleResetGame и связанная с ней логика
             
             return (
                 <div className="modal-overlay" onClick={onClose}>
@@ -1508,7 +1501,6 @@
                             </div>
                         </div>
                         
-                        {/* !!! УДАЛЕНА СЕКЦИЯ "ДАННЫЕ" */}
                         
                         <div className="settings-section">
                             <h3>Об игре</h3>

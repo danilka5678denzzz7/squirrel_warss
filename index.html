@@ -133,15 +133,15 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
-        /* ===>>> ИСПРАВЛЕНИЕ: Обновлённые стили для бонуса (меньше шрифт, сдвиг вниз, ограничение ширины) <<<=== */
+        /* ===>>> ИСПРАВЛЕНИЕ: Обновлённые стили для позиционирования между углами <<<=== */
         .active-bonus-indicator {
             position: absolute;
-            top: 70px; /* Сдвиг вниз, чтобы не перекрывать кнопки в углах */
+            top: 25px; /* Сдвигаем вниз, чтобы быть между иконками */
             left: 50%;
             transform: translateX(-50%);
             display: inline-block; 
             
-            padding: 5px 15px; 
+            padding: 8px 15px; /* Увеличиваем паддинг */
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: bold; 
@@ -151,7 +151,7 @@
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             text-align: center;
-            max-width: 70%; /* Ограничение максимальной ширины */
+            max-width: 60%; /* Ограничение ширины для размещения между кнопками */
             overflow: hidden; 
             text-overflow: ellipsis; 
             white-space: nowrap; 
@@ -161,11 +161,11 @@
             display: flex;
             align-items: center; 
             justify-content: center; 
-            font-size: 1em; /* Уменьшаем шрифт */
+            font-size: 1em; /* Уменьшаем шрифт для лучшего заполнения */
             white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis; 
-            padding: 4px 0; /* Обеспечиваем вертикальный отступ */
+            padding: 0; 
         }
         
         .bonus-indicator-subtext {

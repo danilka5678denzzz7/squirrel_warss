@@ -702,8 +702,8 @@
             const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
             const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
             
-            // !!! НОВОЕ СОСТОЯНИЕ: Для управления классом анимации
-            const [isTapping, setIsTapping] = useState(false);
+            // !!! УДАЛЕНО: Убираем React-состояние для анимации, используем нативный JS
+            // const [isTapping, setIsTapping] = useState(false);
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -984,7 +984,19 @@
             };
             
             // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
-            const processTap = (tapCount, clientX, clientY, gameScreen, isTouch = false) => {
+            const triggerSquirrelAnimation = (targetElement) => {
+                 if (!targetElement) return;
+
+                 // Активируем класс анимации
+                 targetElement.classList.add('active-tap');
+
+                 // Деактивируем класс после завершения анимации (0.15s)
+                 setTimeout(() => {
+                     targetElement.classList.remove('active-tap');
+                 }, 150);
+             };
+            
+            const processTap = (tapCount, clientX, clientY, gameScreen, targetElement) => {
                 if (!musicStarted) {
                     if (musicVolume > 0) { 
                          audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
@@ -1031,9 +1043,8 @@
                         });
                     }
                     
-                    // !!! ОБНОВЛЕНИЕ: Запускаем анимацию нажатия для любого клика/тапа
-                    setIsTapping(true);
-                    setTimeout(() => setIsTapping(false), 150); // Длительность анимации clickShake
+                    // !!! ОБНОВЛЕНИЕ: Запускаем анимацию нажатия
+                    triggerSquirrelAnimation(targetElement);
 
                     playSound(audioTap);
                     setBalance(b => b + totalValue);
@@ -1057,7 +1068,10 @@
                 }
                 
                 const gameScreen = e.currentTarget.closest('.game-screen');
-                processTap(1, e.clientX, e.clientY, gameScreen);
+                // Находим кнопку белки для применения класса
+                const squirrelButton = gameScreen.querySelector('.squirrel-btn'); 
+                
+                processTap(1, e.clientX, e.clientY, gameScreen, squirrelButton);
             };
 
             // 2. Для тапов (мультитач на мобильных)
@@ -1072,10 +1086,12 @@
                 
                 const tapCount = e.touches.length; // Количество пальцев на экране
                 const gameScreen = e.currentTarget.closest('.game-screen');
+                // Находим кнопку белки для применения класса
+                const squirrelButton = gameScreen.querySelector('.squirrel-btn');
                 
                 // Используем координаты первого касания для анимации, но засчитываем все
                 if (e.touches[0]) {
-                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen, true);
+                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen, squirrelButton);
                 }
             };
             // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
@@ -1251,8 +1267,7 @@
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
                                     isDailyRewardAvailable={isDailyRewardAvailable}
                                     onSettingsClick={() => setShowSettingsModal(true)}
-                                    // !!! ПЕРЕДАЧА СОСТОЯНИЯ ТАПА
-                                    isTapping={isTapping} 
+                                    // УДАЛЕНО: props isTapping больше не нужен
                                 />
                                 
                                 {activeBonuses.length > 0 && (
@@ -1689,7 +1704,7 @@
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{icon}</div>
-                        <h3 className={titleClass}>{title}</h3>
+                        <h3 className className={titleClass}>{title}</h3>
                         <p>{message}</p>
                         <button className="buy-btn" onClick={onClose}>
                             Продолжить
@@ -1801,12 +1816,14 @@
 
         // --- Экраны ---
         
-        // !!! ДОБАВЛЕН props isTapping
-        function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick, isTapping }) {
-            const squirrelClasses = `squirrel-btn ${isTapping ? 'active-tap' : ''}`; // Используем класс для анимации
+        // !!! ForestScreen теперь не принимает isTapping, класс применяется к кнопке
+        function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick }) {
+            // Класс для анимации теперь не зависит от props, а применяется из App через JS
+            const squirrelClasses = `squirrel-btn`;
             
             return (
                 <div className="forest-screen">
+                    {/* Кнопка остается с классом squirrel-btn. active-tap будет добавлен через JS */}
                     <button className={squirrelClasses}>
                         <img src="images/squirrel_main_anim.png" alt="Tap me!" />
                     </button>

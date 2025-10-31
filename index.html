@@ -133,38 +133,52 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
+        /* ===>>> СТИЛИ БОНУСА (КОМПАКТНОЕ РАСПОЛОЖЕНИЕ) <<<=== */
         .active-bonus-indicator {
             position: absolute;
-            top: 10px;
+            top: 25px; 
             left: 50%;
             transform: translateX(-50%);
-            /* ИСПРАВЛЕНИЕ: Используем inline-block, чтобы элемент принимал ширину контента */
             display: inline-block; 
             
-            padding: 5px 15px; 
+            padding: 5px 12px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
-            font-weight: bold;
-            border-radius: 5px;
+            font-weight: bold; 
+            border-radius: 12px; 
             z-index: 60;
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            text-align: center; /* Центрируем текст внутри плашки */
+            text-align: center;
+            max-width: 60%; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
         }
         
         .bonus-indicator-item {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            white-space: nowrap; /* Важно: предотвращает перенос строки */
-            margin: 2px 0; /* Небольшой вертикальный отступ между бонусами, если их несколько */
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.9em; 
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            padding: 0; 
+            line-height: 1.2; 
         }
         
+        .bonus-indicator-item strong {
+            margin-left: 2px;
+        }
+
         .bonus-indicator-subtext {
             font-size: 0.8em;
             font-weight: normal;
+            display: none; 
         }
+        /* ===>>> КОНЕЦ СТИЛЕЙ БОНУСА <<<=== */
         
         @keyframes flash {
             from { opacity: 1; }
@@ -215,7 +229,7 @@
             border: none;
             padding: 0;
             cursor: pointer;
-            transition: transform 0.05s ease;
+            /* Убрали transition, т.к. его переопределяет active-tap */
             position: relative;
             z-index: 10;
             /* --- ИСПРАВЛЕНИЕ: Убираем синюю обводку при фокусе/клике --- */
@@ -230,7 +244,10 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
-        .forest-screen .squirrel-btn:active {
+        
+        /* !!! ОБНОВЛЕННЫЙ КЛАСС: Активируется при любом клике/тапе через JS */
+        .forest-screen .squirrel-btn.active-tap {
+            /* Применяем анимацию и эффект нажатия */
             animation: clickShake 0.15s ease-out; 
             transform: scale(0.98); 
         }
@@ -504,7 +521,7 @@
             { day: 4, type: 'nut', value: 25000, icon: '💰', label: '25 000 $NUT' },
             { day: 5, type: 'bonus', bonus: { type: 'speed', name: 'Ускорение', rate: 15, duration: 15 }, icon: '⚡', label: '+15 ⚡️/сек (15с)' },
             { day: 6, type: 'nut', value: 50000, icon: '💰', label: '50 000 $NUT' },
-            { day: 7, type: 'nut', value: 100000, icon: '🎉', label: '100 000 $NUT' },
+            { day: 7, type: 'bonus', bonus: { type: 'madness', name: 'Супер Безумие', multiplier: 20, duration: 20 }, icon: '🎉', label: 'x20 Клик (20с)' }, // Изменено на бонус для теста
         ];
         
         const SAVE_DATA_KEY = 'squirrelWarsSaveData';
@@ -595,34 +612,17 @@
             { id: 101, name: 'Белка_Друг1', contribution: 0 },
         ];
 
-        // ===>>> ИСПРАВЛЕНА ФУНКЦИЯ calculateCost <<<===
+        // ===>>> ФУНКЦИЯ calculateCost с коэффициентом 1.2 для multitap <<<===
         const calculateCost = (baseCost, level, upgradeId) => {
             if (upgradeId === 'multitap') {
-                if (level <= 40) {
-                    return Math.floor(baseCost * Math.pow(1.5, level));
-                } else if (level <= 60) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    return Math.floor(baseAt40 * Math.pow(1.2, level - 40));
-                } else if (level <= 80) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20); 
-                    return Math.floor(baseAt60 * Math.pow(1.15, level - 60));
-                } else if (level <= 100) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20);
-                    const baseAt80 = baseAt60 * Math.pow(1.15, 20); 
-                    return Math.floor(baseAt80 * Math.pow(1.1, level - 80));
-                } else {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20);
-                    const baseAt80 = baseAt60 * Math.pow(1.15, 20);
-                    const baseAt100 = baseAt80 * Math.pow(1.1, 20); 
-                    return Math.floor(baseAt100); 
-                }
+                 // Фиксированный коэффициент удорожания 1.2 для всех уровней multitap
+                 return Math.floor(baseCost * Math.pow(1.2, level));
             } else {
+                // Исходная логика для других улучшений (коэф. 1.5)
                 return Math.floor(baseCost * Math.pow(1.5, level));
             }
         };
+        // ===>>> КОНЕЦ ФУНКЦИИ <<<===
 
 
         const calculateBaseHp = (level) => {
@@ -707,6 +707,8 @@
             const [raidStatus, setRaidStatus] = useState('idle'); 
             const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
             const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
+            
+            const nutTimeoutRef = useRef(null);
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -848,7 +850,7 @@
                 const MIN_Y = 15; 
                 const MAX_Y = 85; 
                 
-                let nutTimeoutId; 
+                let nutIntervalId; 
                 
                 const generateInitialPosition = () => {
                     const startX = Math.floor(Math.random() * (MAX_X - MIN_X) + MIN_X);
@@ -861,18 +863,18 @@
                      setNutPosition(generateInitialPosition());
                      setShowGoldenNut(true);
                      
-                     nutTimeoutId = setTimeout(() => {
+                     nutTimeoutRef.current = setTimeout(() => {
                          setShowGoldenNut(false);
                      }, GOLDEN_NUT_DURATION_S * 1000); 
                 };
                 
                 const initialTimeout = setTimeout(showNut, 10000); 
-                const intervalId = setInterval(showNut, GOLDEN_NUT_INTERVAL_S * 1000); 
+                nutIntervalId = setInterval(showNut, GOLDEN_NUT_INTERVAL_S * 1000); 
                 
                 return () => {
                     clearTimeout(initialTimeout);
-                    clearInterval(intervalId);
-                    clearTimeout(nutTimeoutId);
+                    clearInterval(nutIntervalId);
+                    clearTimeout(nutTimeoutRef.current); 
                 };
             }, []); 
 
@@ -938,6 +940,13 @@
                  e.stopPropagation(); 
 
                  if (!showGoldenNut) return;
+                 
+                 // !!! Исправлено: Очищаем таймаут перед обработкой, чтобы избежать двойного исчезновения
+                 if (nutTimeoutRef.current) {
+                     clearTimeout(nutTimeoutRef.current);
+                     nutTimeoutRef.current = null;
+                 }
+                 
                  setShowGoldenNut(false);
                  
                  const bonuses = [
@@ -958,7 +967,8 @@
                          button: 'Забрать' 
                      });
                  } else {
-                     setActiveBonuses(prev => [...prev, chosenBonus]);
+                     const newBonus = { ...chosenBonus, id: Date.now() };
+                     setActiveBonuses(prev => [...prev, newBonus]);
                      
                      let message = '';
                      if (chosenBonus.type === 'madness') {
@@ -975,7 +985,7 @@
                      });
                      
                      setTimeout(() => {
-                         setActiveBonuses(prev => prev.filter(b => b.name !== chosenBonus.name));
+                         setActiveBonuses(prev => prev.filter(b => b.id !== newBonus.id));
                          setShowBonusModal({
                              icon: '🕰️',
                              title: 'Бонус Завершился',
@@ -987,7 +997,19 @@
             };
             
             // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
-            const processTap = (tapCount, clientX, clientY, gameScreen) => {
+            const triggerSquirrelAnimation = (targetElement) => {
+                 if (!targetElement) return;
+
+                 // Активируем класс анимации
+                 targetElement.classList.add('active-tap');
+
+                 // Деактивируем класс после завершения анимации (0.15s)
+                 setTimeout(() => {
+                     targetElement.classList.remove('active-tap');
+                 }, 150);
+             };
+            
+            const processTap = (tapCount, clientX, clientY, gameScreen, targetElement) => {
                 if (!musicStarted) {
                     if (musicVolume > 0) { 
                          audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
@@ -1033,6 +1055,9 @@
                             isCritical: isCritical 
                         });
                     }
+                    
+                    // Запускаем анимацию нажатия при любом количестве тапов
+                    triggerSquirrelAnimation(targetElement);
 
                     playSound(audioTap);
                     setBalance(b => b + totalValue);
@@ -1056,7 +1081,10 @@
                 }
                 
                 const gameScreen = e.currentTarget.closest('.game-screen');
-                processTap(1, e.clientX, e.clientY, gameScreen);
+                // Находим кнопку белки для применения класса
+                const squirrelButton = gameScreen.querySelector('.squirrel-btn'); 
+                
+                processTap(1, e.clientX, e.clientY, gameScreen, squirrelButton);
             };
 
             // 2. Для тапов (мультитач на мобильных)
@@ -1071,10 +1099,13 @@
                 
                 const tapCount = e.touches.length; // Количество пальцев на экране
                 const gameScreen = e.currentTarget.closest('.game-screen');
+                // Находим кнопку белки для применения класса
+                const squirrelButton = gameScreen.querySelector('.squirrel-btn');
                 
                 // Используем координаты первого касания для анимации, но засчитываем все
                 if (e.touches[0]) {
-                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen);
+                    // Анимация запускается вне зависимости от tapCount
+                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen, squirrelButton);
                 }
             };
             // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
@@ -1153,6 +1184,7 @@
             };
             
             const confirmClaimTask = (task) => {
+                // 1. Применяем награду
                 if (task.type === 'tap') {
                     setBalance(b => b + task.reward);
                     setTotalEarned(t => t + task.reward);
@@ -1185,8 +1217,13 @@
                     }));
                 }
                 
+                // 2. Закрываем модальное окно с подтверждением
                 setShowTaskClaimModal(null); 
-                setActiveTab('forest'); 
+                
+                // !!! ИСПРАВЛЕНИЕ: Откладываем смену вкладки, чтобы избежать конфликта рендеринга
+                setTimeout(() => {
+                    setActiveTab('forest'); 
+                }, 10); // Задержка 10 мс должна дать браузеру время на очистку.
             };
             
             const handleClaimDailyReward = () => {
@@ -1208,7 +1245,7 @@
                             message: `Действие бонуса «${reward.bonus.name}» закончилось.`,
                             button: 'Продолжить'
                         });
-                    }, reward.bonus.duration * 1000);
+                    }, bonus.duration * 1000);
                 }
 
                 setDailyRewardsState({
@@ -1254,13 +1291,21 @@
                                 
                                 {activeBonuses.length > 0 && (
                                     <div className="active-bonus-indicator">
-                                        {activeBonuses.map(bonus => (
-                                            <div key={bonus.name} className="bonus-indicator-item">
-                                                <span>⚡️ {bonus.name}</span>
-                                                {bonus.type === 'madness' && <span className="bonus-indicator-subtext">x{bonus.multiplier} к клику!</span>}
-                                                {bonus.type === 'speed' && <span className="bonus-indicator-subtext">+{bonus.rate} ⚡️/сек!</span>}
-                                            </div>
-                                        ))}
+                                        {activeBonuses.map(bonus => {
+                                            let text = '';
+                                            if (bonus.type === 'madness') {
+                                                text = `⚡️ ${bonus.name}: X${bonus.multiplier} КЛИК!`;
+                                            } else if (bonus.type === 'speed') {
+                                                text = `⚡️ ${bonus.name}: +${bonus.rate} ЭНЕРГИЯ/СЕК!`;
+                                            } else if (bonus.type === 'double_income') {
+                                                text = `💰 ${bonus.name}: X2 ДОХОД!`;
+                                            }
+                                            return (
+                                                <div key={bonus.name} className="bonus-indicator-item">
+                                                    <strong>{text}</strong>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                                 
@@ -1441,6 +1486,13 @@
 
         
         function SettingsModal({ onClose, musicVolume, onVolumeChange }) { 
+            const handleResetGame = () => {
+                if (confirm("Вы уверены? Весь прогресс игры будет удален безвозвратно!")) {
+                    localStorage.clear();
+                    window.location.reload(); 
+                }
+            };
+
             return (
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
@@ -1461,6 +1513,20 @@
                             </div>
                         </div>
 
+                        <div className="settings-section">
+                            <h3>Данные</h3>
+                            <button 
+                                onClick={handleResetGame} 
+                                className="settings-button-link"
+                                style={{backgroundColor: '#CC0000', marginTop: '15px'}}
+                            >
+                                🗑️ Полный сброс прогресса
+                            </button>
+                            <p style={{color: '#FF7043', fontSize: '0.8em', marginTop: '5px'}}>
+                                Внимание: это удалит все орехи, уровни и задания.
+                            </p>
+                        </div>
+                        
                         <div className="settings-section">
                             <h3>Об игре</h3>
                             <p>
@@ -1642,7 +1708,7 @@
         // ===>>> ИЗМЕНЕНИЕ 2: Обновление текста в BotPurchaseModal <<<===
         function BotPurchaseModal({ onClose, rate }) {
             return (
-                <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-overlay">
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon bot-icon">🤖</div>
                         <h3>Покупка завершена!</h3>
@@ -1791,7 +1857,6 @@
         
         function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick }) {
             
-            // ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТСУТСТВИЯ ИЗОБРАЖЕНИЯ (FOLBACK)
             const handleImageError = (e, fallbackEmoji) => {
                 e.currentTarget.style.display = 'none'; 
                 const span = document.createElement('span');
@@ -1943,14 +2008,10 @@
             
             const [infoTaskId, setInfoTaskId] = useState(null); 
             
-            const tapTaskLevel = taskLevels.tap_chain;
-            const tapTask = TASK_CATALOG.tap_chain[tapTaskLevel];
-            
-            const balanceTaskLevel = taskLevels.balance_chain;
-            const balanceTask = TASK_CATALOG.balance_chain[balanceTaskLevel];
-            
-            const earnedTaskLevel = taskLevels.total_earned_chain;
-            const earnedTask = TASK_CATALOG.total_earned_chain[earnedTaskLevel];
+            // !!! БЕЗОПАСНЫЙ ДОСТУП: Проверяем, существует ли текущее задание
+            const tapTask = TASK_CATALOG.tap_chain[taskLevels.tap_chain];
+            const balanceTask = TASK_CATALOG.balance_chain[taskLevels.balance_chain];
+            const earnedTask = TASK_CATALOG.total_earned_chain[taskLevels.total_earned_chain];
             
             const infoTask = infoTaskId 
                 ? (TASK_CATALOG.tap_chain.find(t => t.id === infoTaskId) || 
@@ -1961,6 +2022,7 @@
             const renderTabContent = () => {
                 switch(activeTaskTab) {
                     case 'tap':
+                        // !!! БЕЗОПАСНЫЙ РЕНДЕРИНГ: Проверяем tapTask на существование
                         return tapTask ? (
                             <TaskItem 
                                 task={tapTask} 
@@ -1972,6 +2034,7 @@
                             <p>Все задания по тапам выполнены!</p>
                         );
                     case 'balance':
+                         // !!! БЕЗОПАСНЫЙ РЕНДЕРИНГ: Проверяем balanceTask на существование
                          return balanceTask ? (
                             <TaskItem 
                                 task={balanceTask} 
@@ -1983,6 +2046,7 @@
                             <p>Все задания на баланс выполнены!</p>
                         );
                     case 'milestone':
+                         // !!! БЕЗОПАСНЫЙ РЕНДЕРИНГ: Проверяем earnedTask на существование
                         return earnedTask ? (
                             <TaskItem 
                                 task={earnedTask} 
@@ -2080,7 +2144,7 @@
                         </div>
                     </div>
                     <button 
-                        className="buy-btn" 
+                        className={`buy-btn ${isComplete ? '' : 'disabled'}`} 
                         disabled={!isComplete} 
                         onClick={onClaim}
                         style={{marginLeft: '10px'}}
@@ -2092,7 +2156,7 @@
         }
 
 
-        // ===>>> ИЗМЕНЕНИЕ 3: ЛОГИКА UpgradeItem <<<===
+        // ===>>> ЛОГИКА UpgradeItem <<<===
         function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 

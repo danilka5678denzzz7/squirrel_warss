@@ -138,7 +138,9 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 5px 10px;
+            /* ИСПРАВЛЕНИЕ: Убираем max-width, чтобы плашка была компактной */
+            /* ИСПРАВЛЕНИЕ: Добавляем горизонтальный padding и white-space: nowrap */
+            padding: 5px 15px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: bold;
@@ -148,6 +150,8 @@
             display: flex; 
             flex-direction: column;
             align-items: center;
+            white-space: nowrap; /* Важно: предотвращает перенос строки */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
         .bonus-indicator-subtext {
             font-size: 0.8em;

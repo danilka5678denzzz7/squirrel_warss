@@ -138,8 +138,9 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            /* ИСПРАВЛЕНИЕ: Убираем max-width, чтобы плашка была компактной */
-            /* ИСПРАВЛЕНИЕ: Добавляем горизонтальный padding и white-space: nowrap */
+            /* ИСПРАВЛЕНИЕ: Используем inline-block, чтобы элемент принимал ширину контента */
+            display: inline-block; 
+            
             padding: 5px 15px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
@@ -147,12 +148,19 @@
             border-radius: 5px;
             z-index: 60;
             animation: flash 0.5s infinite alternate;
-            display: flex; 
+            
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            text-align: center; /* Центрируем текст внутри плашки */
+        }
+        
+        .bonus-indicator-item {
+            display: flex;
             flex-direction: column;
             align-items: center;
             white-space: nowrap; /* Важно: предотвращает перенос строки */
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            margin: 2px 0; /* Небольшой вертикальный отступ между бонусами, если их несколько */
         }
+        
         .bonus-indicator-subtext {
             font-size: 0.8em;
             font-weight: normal;
@@ -1209,7 +1217,7 @@
                                 {activeBonuses.length > 0 && (
                                     <div className="active-bonus-indicator">
                                         {activeBonuses.map(bonus => (
-                                            <div key={bonus.name}>
+                                            <div key={bonus.name} className="bonus-indicator-item">
                                                 <span>⚡️ {bonus.name}</span>
                                                 {bonus.type === 'madness' && <span className="bonus-indicator-subtext">x{bonus.multiplier} к клику!</span>}
                                                 {bonus.type === 'speed' && <span className="bonus-indicator-subtext">+{bonus.rate} ⚡️/сек!</span>}

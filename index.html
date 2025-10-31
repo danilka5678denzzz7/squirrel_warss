@@ -589,34 +589,17 @@
             { id: 101, name: 'Белка_Друг1', contribution: 0 },
         ];
 
-        // ===>>> ИСПРАВЛЕНА ФУНКЦИЯ calculateCost <<<===
+        // ===>>> ОБНОВЛЕННАЯ ФУНКЦИЯ calculateCost с коэффициентом 1.2 для multitap <<<===
         const calculateCost = (baseCost, level, upgradeId) => {
             if (upgradeId === 'multitap') {
-                if (level <= 40) {
-                    return Math.floor(baseCost * Math.pow(1.5, level));
-                } else if (level <= 60) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    return Math.floor(baseAt40 * Math.pow(1.2, level - 40));
-                } else if (level <= 80) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20); 
-                    return Math.floor(baseAt60 * Math.pow(1.15, level - 60));
-                } else if (level <= 100) {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20);
-                    const baseAt80 = baseAt60 * Math.pow(1.15, 20); 
-                    return Math.floor(baseAt80 * Math.pow(1.1, level - 80));
-                } else {
-                    const baseAt40 = baseCost * Math.pow(1.5, 40);
-                    const baseAt60 = baseAt40 * Math.pow(1.2, 20);
-                    const baseAt80 = baseAt60 * Math.pow(1.15, 20);
-                    const baseAt100 = baseAt80 * Math.pow(1.1, 20); 
-                    return Math.floor(baseAt100); 
-                }
+                 // Фиксированный коэффициент удорожания 1.2 для всех уровней multitap
+                 return Math.floor(baseCost * Math.pow(1.2, level));
             } else {
+                // Оставляем исходную логику для других улучшений (коэф. 1.5)
                 return Math.floor(baseCost * Math.pow(1.5, level));
             }
         };
+        // ===>>> КОНЕЦ ОБНОВЛЕННОЙ ФУНКЦИИ <<<===
 
 
         const calculateBaseHp = (level) => {
@@ -701,9 +684,6 @@
             const [raidStatus, setRaidStatus] = useState('idle'); 
             const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
             const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
-            
-            // !!! УДАЛЕНО: Убираем React-состояние для анимации, используем нативный JS
-            // const [isTapping, setIsTapping] = useState(false);
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -1043,7 +1023,7 @@
                         });
                     }
                     
-                    // !!! ОБНОВЛЕНИЕ: Запускаем анимацию нажатия
+                    // !!! ОБНОВЛЕНИЕ: Запускаем анимацию нажатия при любом количестве тапов
                     triggerSquirrelAnimation(targetElement);
 
                     playSound(audioTap);
@@ -1091,6 +1071,7 @@
                 
                 // Используем координаты первого касания для анимации, но засчитываем все
                 if (e.touches[0]) {
+                    // Анимация запускается вне зависимости от tapCount
                     processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen, squirrelButton);
                 }
             };
@@ -1267,7 +1248,6 @@
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
                                     isDailyRewardAvailable={isDailyRewardAvailable}
                                     onSettingsClick={() => setShowSettingsModal(true)}
-                                    // УДАЛЕНО: props isTapping больше не нужен
                                 />
                                 
                                 {activeBonuses.length > 0 && (
@@ -1629,7 +1609,7 @@
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{icon}</div>
-                        <h3 className="success">{title}</h3>
+                        <h3 className={titleClass}>{title}</h3>
                         <p style={{fontSize: '1.2em', fontWeight: 'bold', color: 'gold', marginBottom: '10px'}}>
                             {task.name}
                         </p>
@@ -1704,7 +1684,7 @@
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{icon}</div>
-                        <h3 className className={titleClass}>{title}</h3>
+                        <h3 className={titleClass}>{title}</h3>
                         <p>{message}</p>
                         <button className="buy-btn" onClick={onClose}>
                             Продолжить
@@ -1816,14 +1796,12 @@
 
         // --- Экраны ---
         
-        // !!! ForestScreen теперь не принимает isTapping, класс применяется к кнопке
+        // ForestScreen больше не принимает isTapping
         function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick }) {
-            // Класс для анимации теперь не зависит от props, а применяется из App через JS
             const squirrelClasses = `squirrel-btn`;
             
             return (
                 <div className="forest-screen">
-                    {/* Кнопка остается с классом squirrel-btn. active-tap будет добавлен через JS */}
                     <button className={squirrelClasses}>
                         <img src="images/squirrel_main_anim.png" alt="Tap me!" />
                     </button>
@@ -2013,7 +1991,7 @@
                         {infoTask ? (
                             <div>
                                 <div className="icon level-icon" style={{fontSize: '3em', marginBottom: '15px'}}>{infoTask.icon}</div>
-                                <h3 className="max-level">{infoTask.name}</h3>
+                                <h3 className={titleClass}>{infoTask.name}</h3>
                                 <p style={{fontSize: '1.1em', color: '#eee', lineHeight: 1.4, marginBottom: '20px'}}>
                                     {infoTask.details}
                                 </p>
@@ -2100,7 +2078,7 @@
         }
 
 
-        // ===>>> ИЗМЕНЕНИЕ 3: ЛОГИКА UpgradeItem <<<===
+        // ===>>> ЛОГИКА UpgradeItem <<<===
         function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 

@@ -1486,13 +1486,8 @@
 
         
         function SettingsModal({ onClose, musicVolume, onVolumeChange }) { 
-            const handleResetGame = () => {
-                if (confirm("Вы уверены? Весь прогресс игры будет удален безвозвратно!")) {
-                    localStorage.clear();
-                    window.location.reload(); 
-                }
-            };
-
+            // УДАЛЕНА ЛОГИКА СБРОСА ПРОГРЕССА
+            
             return (
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
@@ -1512,20 +1507,8 @@
                                 <span>{musicVolume}%</span>
                             </div>
                         </div>
-
-                        <div className="settings-section">
-                            <h3>Данные</h3>
-                            <button 
-                                onClick={handleResetGame} 
-                                className="settings-button-link"
-                                style={{backgroundColor: '#CC0000', marginTop: '15px'}}
-                            >
-                                🗑️ Полный сброс прогресса
-                            </button>
-                            <p style={{color: '#FF7043', fontSize: '0.8em', marginTop: '5px'}}>
-                                Внимание: это удалит все орехи, уровни и задания.
-                            </p>
-                        </div>
+                        
+                        {/* !!! УДАЛЕНА СЕКЦИЯ ДЛЯ СБРОСА ПРОГРЕССА */}
                         
                         <div className="settings-section">
                             <h3>Об игре</h3>

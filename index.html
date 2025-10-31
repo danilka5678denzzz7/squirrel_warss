@@ -932,10 +932,8 @@
                  }
             };
             
-
-            
-            const handleTap = (e) => {
-                
+            // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
+            const processTap = (tapCount, clientX, clientY, gameScreen) => {
                 if (!musicStarted) {
                     if (musicVolume > 0) { 
                          audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
@@ -945,45 +943,87 @@
                 
                 if (activeTab !== 'forest' && activeTab !== 'raid') return; 
 
-                if (activeTab === 'forest') {
-                    setTotalTaps(t => t + 1);
-                }
-
-                const gameScreen = e.currentTarget.closest('.game-screen');
-                const rect = gameScreen.getBoundingClientRect();
+                // Определяем общее количество кликов/тапов
+                const tapsToProcess = Math.min(tapCount, energy); 
+                if (tapsToProcess <= 0) return;
                 
                 if (activeTab === 'raid' && raidStatus === 'battle') {
-                     handleRaidTap();
+                     // Логика рейдов остается заблокированной
+                     // handleRaidTap(tapsToProcess);
                      return;
                 }
                 
-                if (activeTab === 'forest' && energy >= 1) { 
-                    setEnergy(energy - 1);
+                if (activeTab === 'forest' && energy >= tapsToProcess) { 
+                    setEnergy(e => e - tapsToProcess);
+                    setTotalTaps(t => t + tapsToProcess);
+
+                    let totalValue = 0;
+                    const newAnimations = [];
+                    const rect = gameScreen.getBoundingClientRect();
                     
-                    const isCritical = Math.random() < 0.01; 
-                    const critMultiplier = 5;
-                    const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
-                    
+                    for (let i = 0; i < tapsToProcess; i++) {
+                        const isCritical = Math.random() < 0.01; 
+                        const critMultiplier = 5;
+                        const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
+                        totalValue += currentTapValue;
+                        
+                        const animationX = clientX + (Math.random() * 20 - 10);
+                        const animationY = clientY + (Math.random() * 20 - 10);
+
+                        newAnimations.push({
+                            id: tapIdCounter++,
+                            value: `+${currentTapValue}`, 
+                            x: animationX - rect.left,
+                            y: animationY - rect.top,
+                            isCritical: isCritical 
+                        });
+                    }
+
                     playSound(audioTap);
+                    setBalance(b => b + totalValue);
+                    setTotalEarned(t => t + totalValue);
 
-                    setBalance(balance + currentTapValue);
-                    setTotalEarned(t => t + currentTapValue);
+                    setTapAnimations(prev => [...prev, ...newAnimations]);
 
-                    const newTap = {
-                        id: tapIdCounter++,
-                        value: `+${currentTapValue}`, 
-                        x: e.clientX - rect.left,
-                        y: e.clientY - rect.top,
-                        isCritical: isCritical 
-                    };
-
-                    setTapAnimations(prev => [...prev, newTap]);
-
+                    // Удаляем анимации через 1 секунду
                     setTimeout(() => {
-                        setTapAnimations(prev => prev.filter(tap => tap.id !== newTap.id));
+                        setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
                     }, 1000);
                 }
             };
+
+            // 1. Для кликов мышью (на десктопе)
+            const handleTap = (e) => {
+                // Игнорируем нажатия на золотой орех, если он активен
+                if (e.target.closest('.golden-nut-container')) {
+                    handleGoldenNutClick(e); 
+                    return;
+                }
+                
+                const gameScreen = e.currentTarget.closest('.game-screen');
+                processTap(1, e.clientX, e.clientY, gameScreen);
+            };
+
+            // 2. Для тапов (мультитач на мобильных)
+            const handleTouchStart = (e) => {
+                e.preventDefault(); // Предотвращаем стандартное действие браузера (например, масштабирование)
+                
+                // Игнорируем нажатия на золотой орех, если он активен
+                if (e.target.closest('.golden-nut-container')) {
+                    handleGoldenNutClick(e); 
+                    return;
+                }
+                
+                const tapCount = e.touches.length; // Количество пальцев на экране
+                const gameScreen = e.currentTarget.closest('.game-screen');
+                
+                // Используем координаты первого касания для анимации, но засчитываем все
+                if (e.touches[0]) {
+                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen);
+                }
+            };
+            // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
+
             
             const handleBuyUpgrade = (catalog, upgradeId) => {
                 const upgrade = catalog[upgradeId];
@@ -1144,7 +1184,11 @@
                 switch(activeTab) {
                     case 'forest':
                         return (
-                            <div className="forest-content" onClick={handleTap}>
+                            <div 
+                                className="forest-content" 
+                                onClick={handleTap} 
+                                onTouchStart={handleTouchStart} // <-- НОВЫЙ ОБРАБОТЧИК ДЛЯ МУЛЬТИТАЧА
+                            >
                                 <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
                                     completedTasks={completedTaskCount}
@@ -1218,7 +1262,7 @@
                     case 'squad':
                         return <LockedScreen tab={activeTab} />;
                     default:
-                        return <div className="forest-content" onClick={handleTap}><ForestScreen /></div>;
+                        return <div className="forest-content" onClick={handleTap} onTouchStart={handleTouchStart}><ForestScreen /></div>;
                 }
             };
             

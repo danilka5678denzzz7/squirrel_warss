@@ -941,7 +941,7 @@
 
                  if (!showGoldenNut) return;
                  
-                 // !!! Исправлено: Очищаем таймаут перед обработкой, чтобы избежать двойного исчезновения
+                 // Очищаем таймаут перед обработкой, чтобы избежать двойного исчезновения
                  if (nutTimeoutRef.current) {
                      clearTimeout(nutTimeoutRef.current);
                      nutTimeoutRef.current = null;
@@ -1220,10 +1220,10 @@
                 // 2. Закрываем модальное окно с подтверждением
                 setShowTaskClaimModal(null); 
                 
-                // !!! ИСПРАВЛЕНИЕ: Откладываем смену вкладки, чтобы избежать конфликта рендеринга
+                // Откладываем смену вкладки, чтобы избежать конфликта рендеринга
                 setTimeout(() => {
                     setActiveTab('forest'); 
-                }, 10); // Задержка 10 мс должна дать браузеру время на очистку.
+                }, 10); 
             };
             
             const handleClaimDailyReward = () => {
@@ -1486,7 +1486,7 @@
 
         
         function SettingsModal({ onClose, musicVolume, onVolumeChange }) { 
-            // УДАЛЕНА ЛОГИКА СБРОСА ПРОГРЕССА
+            // !!! УДАЛЕНА ФУНКЦИЯ handleResetGame и связанная с ней логика
             
             return (
                 <div className="modal-overlay" onClick={onClose}>
@@ -1508,7 +1508,7 @@
                             </div>
                         </div>
                         
-                        {/* !!! УДАЛЕНА СЕКЦИЯ ДЛЯ СБРОСА ПРОГРЕССА */}
+                        {/* !!! УДАЛЕНА СЕКЦИЯ "ДАННЫЕ" */}
                         
                         <div className="settings-section">
                             <h3>Об игре</h3>

@@ -133,25 +133,25 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
-        /* ===>>> ИСПРАВЛЕНИЕ: Окончательные стили для эстетичного расположения бонуса <<<=== */
+        /* ===>>> СТИЛИ БОНУСА (КОМПАКТНОЕ РАСПОЛОЖЕНИЕ) <<<=== */
         .active-bonus-indicator {
             position: absolute;
-            top: 25px; /* Немного ниже хедеров, чтобы не перекрывать кнопки в углах */
+            top: 25px; 
             left: 50%;
             transform: translateX(-50%);
             display: inline-block; 
             
-            padding: 5px 12px; /* Уменьшаем вертикальный и горизонтальный паддинг */
+            padding: 5px 12px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: bold; 
-            border-radius: 12px; /* Немного меньше радиус */
+            border-radius: 12px; 
             z-index: 60;
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             text-align: center;
-            max-width: 60%; /* Ограничение ширины для размещения между кнопками */
+            max-width: 60%; 
             overflow: hidden; 
             text-overflow: ellipsis; 
             white-space: nowrap; 
@@ -161,16 +161,15 @@
             display: flex;
             align-items: center; 
             justify-content: center; 
-            font-size: 0.9em; /* Существенно уменьшаем шрифт */
+            font-size: 0.9em; 
             white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis; 
             padding: 0; 
-            line-height: 1.2; /* Более плотная строка */
+            line-height: 1.2; 
         }
         
         .bonus-indicator-item strong {
-             /* Добавляем немного отступа справа от иконки, если иконка есть */
             margin-left: 2px;
         }
 
@@ -179,7 +178,7 @@
             font-weight: normal;
             display: none; 
         }
-        /* ===>>> КОНЕЦ ИСПРАВЛЕНИЯ СТИЛЕЙ <<<=== */
+        /* ===>>> КОНЕЦ СТИЛЕЙ БОНУСА <<<=== */
         
         @keyframes flash {
             from { opacity: 1; }
@@ -230,7 +229,7 @@
             border: none;
             padding: 0;
             cursor: pointer;
-            transition: transform 0.05s ease;
+            /* Убрали transition, т.к. его переопределяет active-tap */
             position: relative;
             z-index: 10;
             /* --- ИСПРАВЛЕНИЕ: Убираем синюю обводку при фокусе/клике --- */
@@ -245,7 +244,10 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
-        .forest-screen .squirrel-btn:active {
+        
+        /* !!! ОБНОВЛЕННЫЙ КЛАСС: Активируется при любом клике/тапе через JS */
+        .forest-screen .squirrel-btn.active-tap {
+            /* Применяем анимацию и эффект нажатия */
             animation: clickShake 0.15s ease-out; 
             transform: scale(0.98); 
         }
@@ -700,6 +702,9 @@
             const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
             const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
             
+            // !!! НОВОЕ СОСТОЯНИЕ: Для управления классом анимации
+            const [isTapping, setIsTapping] = useState(false);
+            
             
             // --- РАСЧЕТЫ БОНУСОВ ---
             let tapMultiplier = 1;
@@ -979,7 +984,7 @@
             };
             
             // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
-            const processTap = (tapCount, clientX, clientY, gameScreen) => {
+            const processTap = (tapCount, clientX, clientY, gameScreen, isTouch = false) => {
                 if (!musicStarted) {
                     if (musicVolume > 0) { 
                          audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
@@ -1025,6 +1030,10 @@
                             isCritical: isCritical 
                         });
                     }
+                    
+                    // !!! ОБНОВЛЕНИЕ: Запускаем анимацию нажатия для любого клика/тапа
+                    setIsTapping(true);
+                    setTimeout(() => setIsTapping(false), 150); // Длительность анимации clickShake
 
                     playSound(audioTap);
                     setBalance(b => b + totalValue);
@@ -1066,7 +1075,7 @@
                 
                 // Используем координаты первого касания для анимации, но засчитываем все
                 if (e.touches[0]) {
-                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen);
+                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen, true);
                 }
             };
             // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
@@ -1242,6 +1251,8 @@
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
                                     isDailyRewardAvailable={isDailyRewardAvailable}
                                     onSettingsClick={() => setShowSettingsModal(true)}
+                                    // !!! ПЕРЕДАЧА СОСТОЯНИЯ ТАПА
+                                    isTapping={isTapping} 
                                 />
                                 
                                 {activeBonuses.length > 0 && (
@@ -1790,10 +1801,13 @@
 
         // --- Экраны ---
         
-        function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick }) {
+        // !!! ДОБАВЛЕН props isTapping
+        function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick, isTapping }) {
+            const squirrelClasses = `squirrel-btn ${isTapping ? 'active-tap' : ''}`; // Используем класс для анимации
+            
             return (
                 <div className="forest-screen">
-                    <button className="squirrel-btn">
+                    <button className={squirrelClasses}>
                         <img src="images/squirrel_main_anim.png" alt="Tap me!" />
                     </button>
                     

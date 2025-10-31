@@ -133,19 +133,19 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
-        /* ===>>> ИСПРАВЛЕНИЕ: Обновлённые стили для позиционирования между углами <<<=== */
+        /* ===>>> ИСПРАВЛЕНИЕ: Окончательные стили для эстетичного расположения бонуса <<<=== */
         .active-bonus-indicator {
             position: absolute;
-            top: 25px; /* Сдвигаем вниз, чтобы быть между иконками */
+            top: 25px; /* Немного ниже хедеров, чтобы не перекрывать кнопки в углах */
             left: 50%;
             transform: translateX(-50%);
             display: inline-block; 
             
-            padding: 8px 15px; /* Увеличиваем паддинг */
+            padding: 5px 12px; /* Уменьшаем вертикальный и горизонтальный паддинг */
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: bold; 
-            border-radius: 15px; 
+            border-radius: 12px; /* Немного меньше радиус */
             z-index: 60;
             animation: flash 0.5s infinite alternate;
             
@@ -161,13 +161,19 @@
             display: flex;
             align-items: center; 
             justify-content: center; 
-            font-size: 1em; /* Уменьшаем шрифт для лучшего заполнения */
+            font-size: 0.9em; /* Существенно уменьшаем шрифт */
             white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis; 
             padding: 0; 
+            line-height: 1.2; /* Более плотная строка */
         }
         
+        .bonus-indicator-item strong {
+             /* Добавляем немного отступа справа от иконки, если иконка есть */
+            margin-left: 2px;
+        }
+
         .bonus-indicator-subtext {
             font-size: 0.8em;
             font-weight: normal;

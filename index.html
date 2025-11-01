@@ -133,7 +133,6 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
-        /* ИСПРАВЛЕНИЕ: Активный бонус теперь всегда в одну строку */
         .active-bonus-indicator {
             position: absolute;
             top: 10px;
@@ -143,7 +142,7 @@
             justify-content: center;
             align-items: center; 
             
-            padding: 8px 15px; /* Увеличил вертикальный паддинг */
+            padding: 8px 15px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: 900; 
@@ -153,12 +152,11 @@
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            white-space: nowrap; /* Гарантируем одну строку */
+            white-space: nowrap;
         }
         
-        /* Убираем ненужные стили, которые создавали столбец */
         .bonus-indicator-item {
-            display: inline-block; /* Теперь это одна строка */
+            display: inline-block;
             text-align: center; 
             margin: 0; 
             font-size: 1.1em;
@@ -166,12 +164,12 @@
         
         .bonus-indicator-item span {
              font-weight: 900; 
-             margin-right: 5px; /* Небольшой отступ после значка ⚡️ */
+             margin-right: 5px;
         }
         
         .bonus-indicator-subtext {
-            font-size: 0.9em; /* Чуть меньше основной строки */
-            font-weight: 900; /* Жирный текст */
+            font-size: 0.9em;
+            font-weight: 900;
         }
         
         @keyframes flash {
@@ -531,7 +529,6 @@
         const RAID_DURATION_SECONDS = 30;
         const GOLDEN_NUT_INTERVAL_S = 600; 
         const GOLDEN_NUT_DURATION_S = 10; 
-        const NUT_SIZE = 75; 
         
         const BASE_BOT_RATE = 10; 
         
@@ -807,8 +804,6 @@
                 
                 if (savedData) {
                     // Используем savedData.energy, если оно есть, ИНАЧЕ 0.
-                    // ЭТО РЕШАЕТ ПРОБЛЕМУ СКАЧКА ДО 1000, т.к. если игрок играл, savedEnergy будет 
-                    // либо текущим, либо 0. Если он новый, то initial Energy будет BASE_ENERGY (1000).
                     const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
@@ -1679,7 +1674,7 @@
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{icon}</div>
-                        <h3 className="success">{title}</h3>
+                        <h3 className={titleClass}>{title}</h3>
                         <p style={{fontSize: '1.2em', fontWeight: 'bold', color: 'gold', marginBottom: '10px'}}>
                             {task.name}
                         </p>
@@ -2157,7 +2152,7 @@
                         </div>
                     </div>
                     <button 
-                        className="buy-btn" 
+                        className={`buy-btn ${buttonClass}`} 
                         disabled={!isComplete} 
                         onClick={onClaim}
                         style={{marginLeft: '10px'}}

@@ -712,7 +712,7 @@
             
             const [showSettingsModal, setShowSettingsModal] = useState(false);
             
-            const [isDataLoaded, setIsDataLoaded] = useState(false);
+            const [isDataLoaded, setIsDataLoaded] = useState(false); // <--- Флаг загрузки данных
             
             const [musicVolume, setMusicVolume] = useState(50); 
             const [musicStarted, setMusicStarted] = useState(false);
@@ -808,7 +808,7 @@
                 const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
 
                 // 3. Инициализация Энергии и Офлайн-Регенерация
-                let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
+                let loadedEnergy = calculatedMaxEnergy; // Инициализируем полной энергией, чтобы не было "0" при первом рендере
                 
                 if (savedData) {
                     // Используем savedData.energy, если оно есть, ИНАЧЕ 0 для корректного расчета регенерации с нуля.
@@ -840,8 +840,6 @@
                             setShowOfflineModal(true);  
                         }
                     }
-                } else {
-                    loadedEnergy = BASE_ENERGY;
                 }
                 
                 // Устанавливаем все состояния
@@ -857,7 +855,7 @@
                     setIsDailyRewardAvailable(true); 
                 }
                 
-                setIsDataLoaded(true); 
+                setIsDataLoaded(true); // <--- ВАЖНО: Устанавливаем флаг после загрузки
             }, []); 
             
             useEffect(() => {
@@ -1307,9 +1305,11 @@
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
+                // ИСПРАВЛЕНИЕ ЧЕРНОГО ЭКРАНА:
+                // Возвращаем прозрачный div, чтобы не блокировать Header, EnergyBar и TabBar,
+                // пока isDataLoaded не станет true.
                 if (!isDataLoaded) {
-                    // Пока данные не загружены, показываем черный экран или заглушку
-                    return <div style={{flexGrow: 1, backgroundColor: '#1a1a1a'}}></div>; 
+                    return <div style={{flexGrow: 1, backgroundColor: 'transparent'}}></div>; 
                 }
                 
                 switch(activeTab) {
@@ -1318,7 +1318,7 @@
                             <div 
                                 className="forest-content" 
                                 onClick={handleTap} 
-                                onTouchStart={handleTouchStart} 
+                                // onTouchStart={handleTouchStart} // Удалено, т.к. touch-action: manipulation в CSS должен помочь
                             >
                                 <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
@@ -2163,7 +2163,7 @@
             if (task.type === 'milestone') rewardText = getMilestoneRewardText(task.reward);
 
             return (
-                <div className={`task-item ${is-claimable' : ''}`}>
+                <div className={`task-item ${isComplete ? 'is-claimable' : ''}`}>
                     <div className="icon">{task.icon}</div>
                     <div className="task-info">
                         <div className="task-title-row"> 
@@ -2176,7 +2176,7 @@
                         </div>
                     </div>
                     <button 
-                        className={`buy-btn ${buttonClass}`} 
+                        className={`buy-btn ${isComplete ? 'is-claimable' : ''}`} 
                         disabled={!isComplete} 
                         onClick={onClaim}
                         style={{marginLeft: '10px'}}

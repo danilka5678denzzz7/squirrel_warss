@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Squirrel Wars - Prototyp v7.3 (Stable Fix)</title>
+    <title>Squirrel Wars - Prototyp v7.3 (Bot Text Fix)</title>
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -138,39 +138,32 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center;
-            align-items: center; 
+            /* ИСПРАВЛЕНИЕ: Используем inline-block, чтобы элемент принимал ширину контента */
+            display: inline-block; 
             
-            padding: 8px 15px; 
+            padding: 5px 15px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
-            font-weight: 900; 
-            
+            font-weight: bold;
             border-radius: 5px;
             z-index: 60;
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            white-space: nowrap;
+            text-align: center; /* Центрируем текст внутри плашки */
         }
         
         .bonus-indicator-item {
-            display: inline-block;
-            text-align: center; 
-            margin: 2px 0; 
-            font-size: 1.1em;
-            line-height: 1.2;
-        }
-        
-        .bonus-indicator-item span {
-             font-weight: 900; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            white-space: nowrap; /* Важно: предотвращает перенос строки */
+            margin: 2px 0; /* Небольшой вертикальный отступ между бонусами, если их несколько */
         }
         
         .bonus-indicator-subtext {
-            font-size: 0.9em;
-            font-weight: 900;
+            font-size: 0.8em;
+            font-weight: normal;
         }
         
         @keyframes flash {
@@ -528,8 +521,9 @@
         
         const RAID_ENERGY_COST = 250;
         const RAID_DURATION_SECONDS = 30;
-        const GOLDEN_NUT_INTERVAL_S = 600; // 10 минут
+        const GOLDEN_NUT_INTERVAL_S = 600; 
         const GOLDEN_NUT_DURATION_S = 10; 
+        const NUT_SIZE = 75; 
         
         const BASE_BOT_RATE = 10; 
         
@@ -540,24 +534,14 @@
         const ENERGY_LIMIT_PER_LEVEL = 250;
         const ENERGY_RECHARGE_PER_LEVEL = 0.2;
         
-        // --- ПЕРЕНОС РАСЧЕТА БОНУСОВ ВНЕ useEffect для корректного использования в расчетах ---
-        
-        const calculateStats = (levels, permBonusLimit) => {
-             const baseTap = (1 + levels.multitap * 1 + 0); 
-             const maxEnergy = BASE_ENERGY + levels.energyLimit * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-             const rechargeRate = (1 + levels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + 0 + 0; 
-             
-             return { maxEnergy, rechargeRate, baseTap };
-        };
-        
-        // ----------------------------------------------------------------------------------------
-
+        // ===>>> ИЗМЕНЕНИЕ 1: Обновление описания Белки-Робота <<<===
         const BOOST_CATALOG = {
             multitap: { id: 'multitap', name: 'Крепкие Зубы', description: `Добыча +1 $NUT за тап (макс. ${MAX_LEVEL_TAP})`, baseCost: 500, icon: 'images/icon_multitap.png', type: 'level', maxLevel: MAX_LEVEL_TAP, emoji: '🦷' },
             energyLimit: { id: 'energyLimit', name: 'Запасливость', description: `Макс. ⚡️Энергия +${ENERGY_LIMIT_PER_LEVEL} (макс. ${MAX_LEVEL_ENERGY_LIMIT})`, baseCost: 5000, icon: 'images/icon_energy_limit.png', type: 'level', maxLevel: MAX_LEVEL_ENERGY_LIMIT, emoji: '🔋' },
             energyRecharge: { id: 'energyRecharge', name: 'Шустрые Лапки', description: `Скорость регенерации +${ENERGY_RECHARGE_PER_LEVEL}/сек (макс. ${MAX_LEVEL_ENERGY_RECHARGE})`, baseCost: 5000, icon: 'images/icon_energy_recharge.png', type: 'level', maxLevel: MAX_LEVEL_ENERGY_RECHARGE, emoji: '⚡' },
             autoBot: { id: 'autoBot', name: 'Белка-Робот', description: `Доход: +${BASE_BOT_RATE}/сек. Оффлайн работает не более 2ч.`, baseCost: 1000000, icon: 'images/icon_autotap_bot.png', type: 'once', maxLevel: 1 }
         };
+        // ===>>> КОНЕЦ ИЗМЕНЕНИЯ 1 <<<===
 
 
         const DEFENSE_CATALOG = {
@@ -693,15 +677,15 @@
             const [showBonusModal, setShowBonusModal] = useState(null); 
             
             const [showGoldenNut, setShowGoldenNut] = useState(false);
-            // Используем ref для отслеживания интервала Золотого Ореха
-            const nutIntervalRef = useRef(null);
-            const nutTimeoutRef = useRef(null);
             const [activeBonuses, setActiveBonuses] = useState([]); 
             const [nutPosition, setNutPosition] = useState({ x: 50, y: 50, isMovingUp: true }); 
             
             const [totalTaps, setTotalTaps] = useState(0); 
             const [totalEarned, setTotalEarned] = useState(0);
             const [taskLevels, setTaskLevels] = useState(defaultTaskLevels); 
+            const [showTasksModal, setShowTasksModal] = useState(false);
+            const [showTaskClaimModal, setShowTaskClaimModal] = useState(null);
+            
             const [levels, setLevels] = useState(defaultLevels);
             
             const [dailyRewardsState, setDailyRewardsState] = useState(defaultDailyRewardsState); 
@@ -712,7 +696,7 @@
             
             const [showSettingsModal, setShowSettingsModal] = useState(false);
             
-            const [isDataLoaded, setIsDataLoaded] = useState(false); // <--- Флаг загрузки данных
+            const [isDataLoaded, setIsDataLoaded] = useState(false);
             
             const [musicVolume, setMusicVolume] = useState(50); 
             const [musicStarted, setMusicStarted] = useState(false);
@@ -734,10 +718,8 @@
             let permBonusRecharge = 0;
             let permBonusLimit = 0;
             
-            // ************ БАГФИКС: Обновленный рендеринг бонусов (для текущего цикла) ************
-            // Эта часть кода выполняется при каждом рендере, но использует актуальное состояние.
-            const currentCompletedMilestones = TASK_CATALOG.total_earned_chain.slice(0, taskLevels.total_earned_chain);
-            currentCompletedMilestones.forEach(task => {
+            const completedMilestones = TASK_CATALOG.total_earned_chain.slice(0, taskLevels.total_earned_chain);
+            completedMilestones.forEach(task => {
                 if (task.reward.type === 'click') permBonusClick += task.reward.value;
                 if (task.reward.type === 'recharge') permBonusRecharge += task.reward.value;
                 if (task.reward.type === 'limit') permBonusLimit += task.reward.value;
@@ -764,7 +746,6 @@
             const completedMilestoneTasks = (currentEarnedTask && totalEarned >= currentEarnedTask.target) ? 1 : 0;
             
             const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks;
-            // ************ КОНЕЦ БАГФИКСА: Обновленный рендеринг бонусов ************
             
             
             useEffect(() => {
@@ -776,61 +757,47 @@
                     try {
                         savedData = JSON.parse(data);
                     } catch (e) {
-                        console.error("Ошибка парсинга JSON из localStorage, сброс данных.", e);
+                        console.error("Ошибка парсинга JSON из localStorage", e);
                         localStorage.removeItem(SAVE_DATA_KEY); 
                     }
                 }
                 
-                // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ ---
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
-                let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
+                setLevels(initialLevels);
                 
-                // 2. Расчет перманентных бонусов на основе загруженных уровней
-                let tempPermBonusLimit = 0;
-                let tempPermBonusRecharge = 0;
-                
-                const taskLevelIndex = initialTaskLevels.total_earned_chain !== undefined ? initialTaskLevels.total_earned_chain : 0;
-                
-                try {
-                    const completedM = TASK_CATALOG.total_earned_chain.slice(0, taskLevelIndex);
-                    completedM.forEach(task => {
-                        if (task.reward.type === 'recharge') tempPermBonusRecharge += task.reward.value;
-                        if (task.reward.type === 'limit') tempPermBonusLimit += task.reward.value;
-                    });
-                } catch(e) {
-                     console.error("Ошибка при расчете перманентных бонусов.", e);
-                     tempPermBonusLimit = 0;
-                     tempPermBonusRecharge = 0;
-                }
+                // Рассчет maxEnergy и rechargeRate на основе загруженных/дефолтных уровней
+                const loadedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                const loadedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + rechargeBonus + permBonusRecharge; 
 
-                // Рассчитываем максимальную энергию и скорость регенерации с учетом loaded levels
-                const calculatedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + tempPermBonusLimit;
-                const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
-
-                // 3. Инициализация Энергии и Офлайн-Регенерация
-                let loadedEnergy = calculatedMaxEnergy; // Инициализируем полной энергией, чтобы не было "0" при первом рендере
+                // 2. Инициализация Энергии и Офлайн-Регенерация
+                let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
                 
                 if (savedData) {
-                    // Используем savedData.energy, если оно есть, ИНАЧЕ 0 для корректного расчета регенерации с нуля.
-                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
+                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : BASE_ENERGY;
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
+                    // --- РЕШЕНИЕ ПРОБЛЕМЫ 1 & 2 (Офлайн-Регенерация Энергии) ---
+                    
                     if (timeDiffSeconds > 0) {
-                        const regeneratedEnergy = timeDiffSeconds * calculatedRechargeRate;
-                        loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, calculatedMaxEnergy);
+                        const regeneratedEnergy = timeDiffSeconds * loadedRechargeRate;
+                        loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, loadedMaxEnergy);
                     } else {
+                        // Если разница во времени 0 или отрицательная, просто используем сохраненное значение
                         loadedEnergy = savedEnergy;
                     }
                     
-                    // Устанавливаем все остальные данные
+                    // --- КОНЕЦ РЕШЕНИЯ ПРОБЛЕМЫ 1 & 2 ---
+                    
                     setBalance(savedData.balance || 0);
+                    setTaskLevels(savedData.taskLevels || defaultTaskLevels);
                     setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
                     setTotalTaps(savedData.totalTaps || 0);
                     setTotalEarned(savedData.totalEarned || 0);
                     setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
-                    if (initialLevels.autoBot > 0) {
+                    // Расчет офлайн-дохода от Робота (остается без изменений)
+                    if (savedData.levels.autoBot > 0) {
                         const maxOfflineTime = 7200; 
                         const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
                         const earnings = Math.floor(effectiveTime * BASE_BOT_RATE);
@@ -842,10 +809,7 @@
                     }
                 }
                 
-                // Устанавливаем все состояния
-                setLevels(initialLevels);
-                setTaskLevels(initialTaskLevels);
-                setEnergy(loadedEnergy); 
+                setEnergy(loadedEnergy); // Устанавливаем энергию после всех расчетов
 
                 const savedTimestamp = (savedData && savedData.dailyRewardsState) ? savedData.dailyRewardsState.lastClaimedTimestamp : null;
                 const today = new Date().toDateString(); 
@@ -855,21 +819,21 @@
                     setIsDailyRewardAvailable(true); 
                 }
                 
-                setIsDataLoaded(true); // <--- ВАЖНО: Устанавливаем флаг после загрузки
-            }, []); 
+                setIsDataLoaded(true); 
+            }, []); // Зависимости убраны, чтобы запускаться один раз при монтировании
             
             useEffect(() => {
                 if (isDataLoaded) { 
                     const dataToSave = {
                         balance,
-                        energy, 
+                        energy, // Теперь сохраняем актуальное значение энергии
                         levels,
                         taskLevels,
                         dailyRewardsState,
                         totalTaps,
                         totalEarned,
                         musicVolume, 
-                        lastOnlineTimestamp: Date.now() 
+                        lastOnlineTimestamp: Date.now() // Сохраняем текущее время
                     };
                     localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave));
                 }
@@ -908,55 +872,40 @@
                 return () => clearInterval(timer);
             }, [maxEnergy, rechargeRate, passiveRatePerSec]); 
             
-            
-            // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ ОБЪЕДИНЕНИЯ ---
-            const resetGoldenNutTimer = (delay = GOLDEN_NUT_INTERVAL_S) => {
-                if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
-                if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
-                
-                // Устанавливаем главный интервал для появления следующего ореха
-                nutIntervalRef.current = setTimeout(showNut, delay * 1000); 
-            };
-            
-            const startGoldenNutTimer = () => {
-                 // Запускаем 10-секундный таймаут на исчезновение
-                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
-                 nutTimeoutRef.current = setTimeout(() => {
-                     setShowGoldenNut(false);
-                     // После исчезновения ореха, запускаем интервал для следующего появления (10 минут)
-                     resetGoldenNutTimer(); 
-                 }, GOLDEN_NUT_DURATION_S * 1000); 
-            };
-            
-            const showNut = () => {
-                setNutPosition(generateInitialPosition());
-                setShowGoldenNut(true);
-                startGoldenNutTimer(); // Запускаем 10-секундный таймаут
-            };
-            
-            // Инициализация/первый запуск Золотого Ореха (10 секунд после загрузки)
             useEffect(() => {
-                 resetGoldenNutTimer(10); // 10 секунд задержка после загрузки игры
-                
-                 return () => {
-                     if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
-                     if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
-                 };
-            }, []); 
-            // --- КОНЕЦ ЛОГИКИ ЗОЛОТОГО ОРЕХА ---
-
-            // Функция для генерации позиции (оставлена без изменений)
-            const generateInitialPosition = () => {
                 const MAX_X = 90; 
                 const MIN_X = 5;
                 const MIN_Y = 15; 
                 const MAX_Y = 85; 
-                const startX = Math.floor(Math.random() * (MAX_X - MIN_X) + MIN_X);
-                const startY = Math.floor(Math.random() * (MAX_Y - MIN_Y) + MIN_Y);
-                return { x: startX, y: startY, isMovingUp: Math.random() > 0.5 };
-            };
-            
-            // Движение Ореха (оставлено без изменений)
+                
+                let nutTimeoutId; 
+                
+                const generateInitialPosition = () => {
+                    const startX = Math.floor(Math.random() * (MAX_X - MIN_X) + MIN_X);
+                    const startY = Math.floor(Math.random() * (MAX_Y - MIN_Y) + MIN_Y);
+                    
+                    return { x: startX, y: startY, isMovingUp: Math.random() > 0.5 };
+                };
+                
+                const showNut = () => {
+                     setNutPosition(generateInitialPosition());
+                     setShowGoldenNut(true);
+                     
+                     nutTimeoutId = setTimeout(() => {
+                         setShowGoldenNut(false);
+                     }, GOLDEN_NUT_DURATION_S * 1000); 
+                };
+                
+                const initialTimeout = setTimeout(showNut, 10000); 
+                const intervalId = setInterval(showNut, GOLDEN_NUT_INTERVAL_S * 1000); 
+                
+                return () => {
+                    clearTimeout(initialTimeout);
+                    clearInterval(intervalId);
+                    clearTimeout(nutTimeoutId);
+                };
+            }, []); 
+
             useEffect(() => {
                 let nutMoveIntervalId;
                 
@@ -1015,15 +964,11 @@
             }, [musicVolume, musicStarted]);
             
             
-            // --- ЛОГИКА КЛИКА ПО ЗОЛОТОМУ ОРЕХУ: ИСПРАВЛЕНИЕ ОБЪЕДИНЕНИЯ ---
             const handleGoldenNutClick = (e) => {
                  e.stopPropagation(); 
 
                  if (!showGoldenNut) return;
                  setShowGoldenNut(false);
-                 
-                 // Сброс таймеров Золотого Ореха и запуск нового интервала на 10 минут
-                 resetGoldenNutTimer(GOLDEN_NUT_INTERVAL_S); 
                  
                  const bonuses = [
                      { type: 'instant', name: 'Орехопад', value: 1000, duration: 0 },
@@ -1043,31 +988,7 @@
                          button: 'Забрать' 
                      });
                  } else {
-                     // Логика объединения бонусов
-                     const existingBonusIndex = activeBonuses.findIndex(b => b.type === chosenBonus.type);
-                     
-                     if (existingBonusIndex >= 0) {
-                          // Если бонус уже активен, увеличиваем его время
-                          const updatedBonuses = [...activeBonuses];
-                          const existingBonus = updatedBonuses[existingBonusIndex];
-                          
-                          const now = Date.now();
-                          const baseExpiry = Math.max(existingBonus.expiry || now, now);
-                          const newExpiry = baseExpiry + (chosenBonus.duration * 1000);
-                          
-                          updatedBonuses[existingBonusIndex] = {
-                              ...existingBonus,
-                              expiry: newExpiry,
-                              duration: (newExpiry - now) / 1000 
-                          };
-                          setActiveBonuses(updatedBonuses);
-                     } else {
-                          // Если бонус новый, добавляем его
-                          setActiveBonuses(prev => [...prev, {
-                              ...chosenBonus,
-                              expiry: Date.now() + (chosenBonus.duration * 1000)
-                          }]);
-                     }
+                     setActiveBonuses(prev => [...prev, chosenBonus]);
                      
                      let message = '';
                      if (chosenBonus.type === 'madness') {
@@ -1078,17 +999,25 @@
                      
                      setShowBonusModal({ 
                          icon: '⚡', 
-                         title: existingBonusIndex >= 0 ? `Бонус продлен: ${chosenBonus.name}` : chosenBonus.name, 
+                         title: chosenBonus.name, 
                          message: message, 
                          button: 'Отлично!' 
                      });
+                     
+                     setTimeout(() => {
+                         setActiveBonuses(prev => prev.filter(b => b.name !== chosenBonus.name));
+                         setShowBonusModal({
+                             icon: '🕰️',
+                             title: 'Бонус Завершился',
+                             message: `Действие бонуса «${chosenBonus.name}» закончилось.`, 
+                             button: 'Продолжить'
+                         });
+                     }, chosenBonus.duration * 1000);
                  }
             };
             
-
-            
-            const handleTap = (e) => {
-                
+            // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
+            const processTap = (tapCount, clientX, clientY, gameScreen) => {
                 if (!musicStarted) {
                     if (musicVolume > 0) { 
                          audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
@@ -1098,45 +1027,88 @@
                 
                 if (activeTab !== 'forest' && activeTab !== 'raid') return; 
 
-                if (activeTab === 'forest') {
-                    setTotalTaps(t => t + 1);
-                }
-
-                const gameScreen = e.currentTarget.closest('.game-screen');
-                const rect = gameScreen.getBoundingClientRect();
+                // Определяем общее количество кликов/тапов
+                const tapsToProcess = Math.min(tapCount, energy); 
+                if (tapsToProcess <= 0) return;
                 
                 if (activeTab === 'raid' && raidStatus === 'battle') {
-                     handleRaidTap();
+                     // Логика рейдов остается заблокированной
+                     // handleRaidTap(tapsToProcess);
                      return;
                 }
                 
-                if (activeTab === 'forest' && energy >= 1) { 
-                    setEnergy(energy - 1);
+                if (activeTab === 'forest' && energy >= tapsToProcess) { 
+                    setEnergy(e => e - tapsToProcess);
+                    setTotalTaps(t => t + tapsToProcess);
+
+                    let totalValue = 0;
+                    const newAnimations = [];
+                    const rect = gameScreen.getBoundingClientRect();
                     
-                    const isCritical = Math.random() < 0.01; 
-                    const critMultiplier = 5;
-                    const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
-                    
+                    for (let i = 0; i < tapsToProcess; i++) {
+                        const isCritical = Math.random() < 0.01; 
+                        const critMultiplier = 5;
+                        const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
+                        totalValue += currentTapValue;
+                        
+                        // Случайное смещение для каждой анимации, чтобы они не накладывались
+                        const animationX = clientX + (Math.random() * 20 - 10);
+                        const animationY = clientY + (Math.random() * 20 - 10);
+
+                        newAnimations.push({
+                            id: tapIdCounter++,
+                            value: `+${currentTapValue}`, 
+                            x: animationX - rect.left,
+                            y: animationY - rect.top,
+                            isCritical: isCritical 
+                        });
+                    }
+
                     playSound(audioTap);
+                    setBalance(b => b + totalValue);
+                    setTotalEarned(t => t + totalValue);
 
-                    setBalance(balance + currentTapValue);
-                    setTotalEarned(t => t + currentTapValue);
+                    setTapAnimations(prev => [...prev, ...newAnimations]);
 
-                    const newTap = {
-                        id: tapIdCounter++,
-                        value: `+${currentTapValue}`, 
-                        x: e.clientX - rect.left,
-                        y: e.clientY - rect.top,
-                        isCritical: isCritical 
-                    };
-
-                    setTapAnimations(prev => [...prev, newTap]);
-
+                    // Удаляем анимации через 1 секунду
                     setTimeout(() => {
-                        setTapAnimations(prev => prev.filter(tap => tap.id !== newTap.id));
+                        setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
                     }, 1000);
                 }
             };
+
+            // 1. Для кликов мышью (на десктопе)
+            const handleTap = (e) => {
+                // Игнорируем нажатия на золотой орех, если он активен
+                if (e.target.closest('.golden-nut-container')) {
+                    handleGoldenNutClick(e); 
+                    return;
+                }
+                
+                const gameScreen = e.currentTarget.closest('.game-screen');
+                processTap(1, e.clientX, e.clientY, gameScreen);
+            };
+
+            // 2. Для тапов (мультитач на мобильных)
+            const handleTouchStart = (e) => {
+                e.preventDefault(); // Предотвращаем стандартное действие браузера (например, масштабирование)
+                
+                // Игнорируем нажатия на золотой орех, если он активен
+                if (e.target.closest('.golden-nut-container')) {
+                    handleGoldenNutClick(e); 
+                    return;
+                }
+                
+                const tapCount = e.touches.length; // Количество пальцев на экране
+                const gameScreen = e.currentTarget.closest('.game-screen');
+                
+                // Используем координаты первого касания для анимации, но засчитываем все
+                if (e.touches[0]) {
+                    processTap(tapCount, e.touches[0].clientX, e.touches[0].clientY, gameScreen);
+                }
+            };
+            // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
+
             
             const handleBuyUpgrade = (catalog, upgradeId) => {
                 const upgrade = catalog[upgradeId];
@@ -1167,13 +1139,18 @@
 
                     if (upgradeId === 'autoBot' && upgrade.type === 'once') {
                         setShowBotModal(true); 
-                    } else if (upgradeId === 'energyLimit') {
-                        const newMaxEnergy = BASE_ENERGY + (currentLevel + 1) * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-                        setEnergy(newMaxEnergy);
                     } else if (upgrade.type === 'level') {
                          const newLevel = currentLevel + 1;
                          const reachedMax = newLevel === upgrade.maxLevel;
                          setShowUpgradeModal({ id: upgradeId, level: newLevel, isMax: reachedMax });
+                    }
+                    
+                    if (upgradeId === 'energyLimit') {
+                        // Обновление энергии при покупке лимита
+                        const oldMaxEnergy = BASE_ENERGY + currentLevel * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                        const newMaxEnergy = BASE_ENERGY + (currentLevel + 1) * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                        const energyRatio = energy / oldMaxEnergy;
+                        setEnergy(Math.min(newMaxEnergy, Math.ceil(newMaxEnergy * energyRatio)));
                     }
                     
                 } else {
@@ -1217,31 +1194,18 @@
                         tap_chain: prev.tap_chain + 1
                     }));
                 } else if (task.type === 'balance') {
-                     // --- ЛОГИКА ОБЪЕДИНЕНИЯ БОНУСОВ ДЛЯ ЗАДАНИЙ ---
-                     const bonus = { ...task.reward, type: 'double_income', id: Date.now() };
-                     const existingBonusIndex = activeBonuses.findIndex(b => b.type === bonus.type);
-                     
-                     if (existingBonusIndex >= 0) {
-                          const updatedBonuses = [...activeBonuses];
-                          const existingBonus = updatedBonuses[existingBonusIndex];
-                          
-                          const now = Date.now();
-                          const baseExpiry = Math.max(existingBonus.expiry || now, now);
-                          const newExpiry = baseExpiry + (bonus.duration * 1000);
-                          
-                          updatedBonuses[existingBonusIndex] = {
-                              ...existingBonus,
-                              expiry: newExpiry,
-                              duration: (newExpiry - now) / 1000 
-                          };
-                          setActiveBonuses(updatedBonuses);
-                     } else {
-                          setActiveBonuses(prev => [...prev, {
-                              ...bonus,
-                              expiry: Date.now() + (bonus.duration * 1000)
-                          }]);
-                     }
-                     // --- КОНЕЦ ЛОГИКИ ОБЪЕДИНЕНИЯ ---
+                    const bonus = { ...task.reward, id: Date.now() };
+                    setActiveBonuses(prev => [...prev, bonus]);
+                    
+                    setTimeout(() => {
+                        setActiveBonuses(prev => prev.filter(b => b.id !== bonus.id));
+                        setShowBonusModal({
+                            icon: '🕰️',
+                            title: 'Бонус Завершился',
+                            message: `Действие бонуса «${bonus.name}» закончилось.`,
+                            button: 'Продолжить'
+                        });
+                    }, bonus.duration * 1000);
                     
                     setTaskLevels(prev => ({
                         ...prev,
@@ -1305,19 +1269,13 @@
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
-                // ИСПРАВЛЕНИЕ: Возвращаем прозрачный div, чтобы не блокировать Header, EnergyBar и TabBar,
-                // пока isDataLoaded не станет true.
-                if (!isDataLoaded) {
-                    return <div style={{flexGrow: 1, backgroundColor: 'transparent'}}></div>; 
-                }
-                
                 switch(activeTab) {
                     case 'forest':
                         return (
                             <div 
                                 className="forest-content" 
                                 onClick={handleTap} 
-                                onTouchStart={handleTap} // Используем handleTap для touch
+                                onTouchStart={handleTouchStart} 
                             >
                                 <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
@@ -1329,27 +1287,13 @@
                                 
                                 {activeBonuses.length > 0 && (
                                     <div className="active-bonus-indicator">
-                                        {activeBonuses.map(bonus => {
-                                            const timeRemaining = Math.floor((bonus.expiry - Date.now()) / 1000);
-                                            const displayTime = timeRemaining > 0 ? ` (${timeRemaining} сек)` : '';
-                                            
-                                            let displayValue = '';
-                                            if (bonus.type === 'madness') {
-                                                displayValue = `Безумие x${bonus.multiplier} к клику!`;
-                                            } else if (bonus.type === 'speed') {
-                                                displayValue = `Ускорение +${bonus.rate} ⚡️/сек!`;
-                                            } else if (bonus.type === 'double_income') {
-                                                displayValue = `Двойной доход x2`;
-                                            }
-
-                                            return (
-                                                <div key={bonus.type} className="bonus-indicator-item">
-                                                     <span className="bonus-indicator-subtext">
-                                                         ⚡️ {displayValue}{displayTime}
-                                                     </span>
-                                                </div>
-                                            );
-                                        })}
+                                        {activeBonuses.map(bonus => (
+                                            <div key={bonus.name} className="bonus-indicator-item">
+                                                <span>⚡️ {bonus.name}</span>
+                                                {bonus.type === 'madness' && <span className="bonus-indicator-subtext">x{bonus.multiplier} к клику!</span>}
+                                                {bonus.type === 'speed' && <span className="bonus-indicator-subtext">+{bonus.rate} ⚡️/сек!</span>}
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                                 
@@ -1406,18 +1350,7 @@
                     case 'squad':
                         return <LockedScreen tab={activeTab} />;
                     default:
-                        // Возвращаем ForestScreen по умолчанию, если activeTab не определен
-                        return (
-                            <div className="forest-content" onClick={handleTap} onTouchStart={handleTap}>
-                                <ForestScreen 
-                                    onTasksClick={() => setShowTasksModal(true)} 
-                                    completedTasks={completedTaskCount}
-                                    onDailyRewardClick={() => setShowDailyRewardsModal(true)}
-                                    isDailyRewardAvailable={isDailyRewardAvailable}
-                                    onSettingsClick={() => setShowSettingsModal(true)}
-                                />
-                            </div>
-                        );
+                        return <div className="forest-content" onClick={handleTap} onTouchStart={handleTouchStart}><ForestScreen /></div>;
                 }
             };
             
@@ -1684,8 +1617,6 @@
             let title = 'Награда получена!'; 
             let icon = task.icon;
             let buttonText = 'Забрать!';
-            // Установка titleClass на основании наличия isMax
-            const titleClass = 'success'; // Предполагаем успех, так как это модальное окно для получения награды
 
             if (task.type === 'tap') {
                 rewardMessage = `Вы получаете +${formatBalance(task.reward)} $NUT!`;
@@ -1704,7 +1635,7 @@
                 <div className="modal-overlay" onClick={onClose}>
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{icon}</div>
-                        <h3 className={titleClass}>{title}</h3>
+                        <h3 className="success">{title}</h3>
                         <p style={{fontSize: '1.2em', fontWeight: 'bold', color: 'gold', marginBottom: '10px'}}>
                             {task.name}
                         </p>
@@ -1895,19 +1826,13 @@
             
             // ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТСУТСТВИЯ ИЗОБРАЖЕНИЯ (FOLBACK)
             const handleImageError = (e, fallbackEmoji) => {
-                // Если произошла ошибка загрузки изображения, скрываем <img>
                 e.currentTarget.style.display = 'none'; 
-                
-                // Проверяем, был ли уже вставлен эмодзи (чтобы не дублировать)
-                if (!e.currentTarget.parentNode.querySelector('.fallback-emoji')) {
-                    const span = document.createElement('span');
-                    span.textContent = fallbackEmoji;
-                    span.className = 'fallback-emoji'; // Добавляем класс для идентификации
-                    span.style.fontSize = '2.5em';
-                    span.style.color = 'white';
-                    span.style.textShadow = '0 0 5px black';
-                    e.currentTarget.parentNode.insertBefore(span, e.currentTarget);
-                }
+                const span = document.createElement('span');
+                span.textContent = fallbackEmoji;
+                span.style.fontSize = '2.5em';
+                span.style.color = 'white';
+                span.style.textShadow = '0 0 5px black';
+                e.currentTarget.parentNode.insertBefore(span, e.currentTarget);
             };
 
             return (
@@ -2052,13 +1977,13 @@
             const [infoTaskId, setInfoTaskId] = useState(null); 
             
             const tapTaskLevel = taskLevels.tap_chain;
-            const tapTask = TASK_CATALOG.tap_chain[taskLevels.tap_chain];
+            const tapTask = TASK_CATALOG.tap_chain[tapTaskLevel];
             
             const balanceTaskLevel = taskLevels.balance_chain;
-            const balanceTask = TASK_CATALOG.balance_chain[taskLevels.balance_chain];
+            const balanceTask = TASK_CATALOG.balance_chain[balanceTaskLevel];
             
             const earnedTaskLevel = taskLevels.total_earned_chain;
-            const earnedTask = TASK_CATALOG.total_earned_chain[taskLevels.total_earned_chain];
+            const earnedTask = TASK_CATALOG.total_earned_chain[earnedTaskLevel];
             
             const infoTask = infoTaskId 
                 ? (TASK_CATALOG.tap_chain.find(t => t.id === infoTaskId) || 
@@ -2188,7 +2113,7 @@
                         </div>
                     </div>
                     <button 
-                        className={`buy-btn ${isComplete ? 'is-claimable' : ''}`} 
+                        className="buy-btn" 
                         disabled={!isComplete} 
                         onClick={onClaim}
                         style={{marginLeft: '10px'}}
@@ -2200,7 +2125,7 @@
         }
 
 
-        // ===>>> ЛОГИКА UpgradeItem <<<===
+        // ===>>> ИЗМЕНЕНИЕ 3: ЛОГИКА UpgradeItem <<<===
         function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 

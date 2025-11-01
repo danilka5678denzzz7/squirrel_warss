@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Squirrel Wars - Prototyp v7.3 (Bot Text Fix) - Обновлено</title>
+    <title>Squirrel Wars - Prototyp v7.4 (Global Reset)</title>
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -520,7 +520,8 @@
             { day: 7, type: 'nut', value: 100000, icon: '🎉', label: '100 000 $NUT' },
         ];
         
-        const SAVE_DATA_KEY = 'squirrelWarsSaveData';
+        // ИЗМЕНЕНО: Обновленный ключ для сброса данных у всех пользователей
+        const SAVE_DATA_KEY = 'squirrelWarsSaveData_V2';
         
         // ВНИМАНИЕ: Звуковые файлы (click.mp3, music.mp3) должны быть доступны в папке 'audio/'
         const audioTap = new Audio('audio/click.mp3');

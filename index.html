@@ -133,20 +133,19 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
+        /* ИСПРАВЛЕНИЕ: Активный бонус теперь всегда в одну строку */
         .active-bonus-indicator {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            /* ИСПРАВЛЕНИЕ: Используем inline-block, чтобы элемент принимал ширину контента */
             display: flex; 
             justify-content: center;
             align-items: center; 
             
-            padding: 5px 15px; 
+            padding: 8px 15px; /* Увеличил вертикальный паддинг */
             background: rgba(255, 215, 0, 0.9);
             color: black;
-            /* ИСПРАВЛЕНИЕ: Делаем текст жирным */
             font-weight: 900; 
             
             border-radius: 5px;
@@ -154,26 +153,25 @@
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            text-align: center; /* Центрируем текст внутри плашки */
+            white-space: nowrap; /* Гарантируем одну строку */
         }
         
+        /* Убираем ненужные стили, которые создавали столбец */
         .bonus-indicator-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            white-space: nowrap; /* Важно: предотвращает перенос строки */
-            margin: 2px 0; /* Небольшой вертикальный отступ между бонусами, если их несколько */
-            /* ИСПРАВЛЕНИЕ: Убеждаемся, что span внутри тоже центрируется/выравнивается */
+            display: inline-block; /* Теперь это одна строка */
             text-align: center; 
+            margin: 0; 
+            font-size: 1.1em;
         }
         
         .bonus-indicator-item span {
-             font-weight: 900; /* Жирный текст для основного бонуса */
+             font-weight: 900; 
+             margin-right: 5px; /* Небольшой отступ после значка ⚡️ */
         }
         
         .bonus-indicator-subtext {
-            font-size: 0.8em;
-            font-weight: normal;
+            font-size: 0.9em; /* Чуть меньше основной строки */
+            font-weight: 900; /* Жирный текст */
         }
         
         @keyframes flash {
@@ -786,7 +784,7 @@
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
                 let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
-                // Рассчитываем перманентные бонусы на основе загруженных уровней
+                // 2. Расчет перманентных бонусов на основе загруженных уровней
                 let tempPermBonusLimit = 0;
                 let tempPermBonusRecharge = 0;
                 
@@ -804,18 +802,17 @@
                 const calculatedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + tempPermBonusLimit;
                 const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
 
-                // 2. Инициализация Энергии и Офлайн-Регенерация
+                // 3. Инициализация Энергии и Офлайн-Регенерация
                 let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
                 
                 if (savedData) {
                     // Используем savedData.energy, если оно есть, ИНАЧЕ 0.
-                    // Это решает проблему "скачка до 1000", если энергия была потрачена,
-                    // и обеспечивает корректный расчет регенерации с 0.
+                    // ЭТО РЕШАЕТ ПРОБЛЕМУ СКАЧКА ДО 1000, т.к. если игрок играл, savedEnergy будет 
+                    // либо текущим, либо 0. Если он новый, то initial Energy будет BASE_ENERGY (1000).
                     const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
-                    // --- РЕШЕНИЕ ПРОБЛЕМЫ: Офлайн-Регенерация Энергии ---
                     if (timeDiffSeconds > 0) {
                         const regeneratedEnergy = timeDiffSeconds * calculatedRechargeRate;
                         // Регенерируем энергию, но не превышаем Максимальный лимит
@@ -824,8 +821,7 @@
                         loadedEnergy = savedEnergy;
                     }
                     
-                    // --- КОНЕЦ РЕШЕНИЯ ПРОБЛЕМЫ ---
-                    
+                    // Устанавливаем все остальные данные
                     setBalance(savedData.balance || 0);
                     setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
                     setTotalTaps(savedData.totalTaps || 0);
@@ -944,7 +940,7 @@
                     clearInterval(intervalId);
                     clearTimeout(nutTimeoutId);
                 };
-            }, []); 
+            }, [showGoldenNut]); 
 
             useEffect(() => {
                 let nutMoveIntervalId;
@@ -1334,9 +1330,12 @@
                                     <div className="active-bonus-indicator">
                                         {activeBonuses.map(bonus => (
                                             <div key={bonus.name} className="bonus-indicator-item">
-                                                <span>⚡️ {bonus.name}</span>
-                                                {bonus.type === 'madness' && <span className="bonus-indicator-subtext">x{bonus.multiplier} к клику!</span>}
-                                                {bonus.type === 'speed' && <span className="bonus-indicator-subtext">+{bonus.rate} ⚡️/сек!</span>}
+                                                {/* ИСПРАВЛЕНИЕ: Объединяем текст в одну строку */}
+                                                <span className="bonus-indicator-subtext">
+                                                    ⚡️ {bonus.name} 
+                                                    {bonus.type === 'madness' && <span> x{bonus.multiplier} к клику!</span>}
+                                                    {bonus.type === 'speed' && <span> +{bonus.rate} ⚡️/сек!</span>}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>

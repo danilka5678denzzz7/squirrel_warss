@@ -133,19 +133,17 @@
             100% { transform: translateY(-5px) rotate(2deg); }
         }
         
-        /* ИСПРАВЛЕНИЕ: Активный бонус теперь вертикальный список с отдельными строками */
         .active-bonus-indicator {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            
             display: flex; 
-            flex-direction: column; /* Размещаем элементы друг под другом */
+            flex-direction: column; 
             justify-content: center;
             align-items: center; 
             
-            padding: 5px 15px; 
+            padding: 8px 15px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: 900; 
@@ -159,7 +157,7 @@
         }
         
         .bonus-indicator-item {
-            display: block; /* Каждая плашка бонуса теперь занимает свою строку */
+            display: inline-block;
             text-align: center; 
             margin: 2px 0; 
             font-size: 1.1em;
@@ -168,6 +166,7 @@
         
         .bonus-indicator-item span {
              font-weight: 900; 
+             margin-right: 5px;
         }
         
         .bonus-indicator-subtext {
@@ -530,7 +529,7 @@
         
         const RAID_ENERGY_COST = 250;
         const RAID_DURATION_SECONDS = 30;
-        const GOLDEN_NUT_INTERVAL_S = 600; 
+        const GOLDEN_NUT_INTERVAL_S = 600; // 10 минут
         const GOLDEN_NUT_DURATION_S = 10; 
         
         const BASE_BOT_RATE = 10; 
@@ -545,9 +544,9 @@
         // --- ПЕРЕНОС РАСЧЕТА БОНУСОВ ВНЕ useEffect для корректного использования в расчетах ---
         
         const calculateStats = (levels, permBonusLimit) => {
-             const baseTap = (1 + levels.multitap * 1 + 0); // permBonusClick не может быть рассчитан здесь
+             const baseTap = (1 + levels.multitap * 1 + 0); 
              const maxEnergy = BASE_ENERGY + levels.energyLimit * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-             const rechargeRate = (1 + levels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + 0 + 0; // rechargeBonus, permBonusRecharge не могут быть рассчитаны здесь
+             const rechargeRate = (1 + levels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + 0 + 0; 
              
              return { maxEnergy, rechargeRate, baseTap };
         };
@@ -773,7 +772,6 @@
                 const data = localStorage.getItem(SAVE_DATA_KEY);
                 let savedData = null;
                 
-                // 1. Попытка загрузить данные
                 if (data) {
                     try {
                         savedData = JSON.parse(data);
@@ -783,15 +781,12 @@
                     }
                 }
                 
-                // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ И УСТРАНЕНИЕ ОШИБКИ ЧЕРНОГО ЭКРАНА ---
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
                 let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
-                // 2. Расчет перманентных бонусов на основе загруженных уровней
                 let tempPermBonusLimit = 0;
                 let tempPermBonusRecharge = 0;
                 
-                // Защита от undefined: проверяем существование элемента в массиве, прежде чем его slice'ить
                 if (initialTaskLevels.total_earned_chain !== undefined) {
                     const completedM = TASK_CATALOG.total_earned_chain.slice(0, initialTaskLevels.total_earned_chain);
                     completedM.forEach(task => {
@@ -801,35 +796,29 @@
                 }
 
 
-                // Рассчитываем максимальную энергию и скорость регенерации с учетом loaded levels
                 const calculatedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + tempPermBonusLimit;
                 const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
 
-                // 3. Инициализация Энергии и Офлайн-Регенерация
-                let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
+                let loadedEnergy = BASE_ENERGY;
                 
                 if (savedData) {
-                    // Используем savedData.energy, если оно есть, ИНАЧЕ 0.
                     const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
                     if (timeDiffSeconds > 0) {
                         const regeneratedEnergy = timeDiffSeconds * calculatedRechargeRate;
-                        // Регенерируем энергию, но не превышаем Максимальный лимит
                         loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, calculatedMaxEnergy);
                     } else {
                         loadedEnergy = savedEnergy;
                     }
                     
-                    // Устанавливаем все остальные данные
                     setBalance(savedData.balance || 0);
                     setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
                     setTotalTaps(savedData.totalTaps || 0);
                     setTotalEarned(savedData.totalEarned || 0);
                     setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
-                    // Расчет офлайн-дохода от Робота (остается без изменений)
                     if (initialLevels.autoBot > 0) {
                         const maxOfflineTime = 7200; 
                         const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
@@ -842,7 +831,6 @@
                     }
                 }
                 
-                // Устанавливаем все состояния
                 setLevels(initialLevels);
                 setTaskLevels(initialTaskLevels);
                 setEnergy(loadedEnergy); 
@@ -858,7 +846,6 @@
                 setIsDataLoaded(true); 
             }, []); 
             
-            // Сохранение данных (использует energy, которую мы корректно загрузили/рассчитали)
             useEffect(() => {
                 if (isDataLoaded) { 
                     const dataToSave = {
@@ -909,46 +896,45 @@
                 return () => clearInterval(timer);
             }, [maxEnergy, rechargeRate, passiveRatePerSec]); 
             
+            
             // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ ТАЙМЕРА ---
-            const resetGoldenNutTimer = () => {
-                // Очищаем существующие таймеры
+            const resetGoldenNutTimer = (delay = GOLDEN_NUT_INTERVAL_S) => {
+                // Очищаем существующие таймеры, чтобы предотвратить дублирование
                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
                 if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
-
-                // Запускаем интервал для появления следующего ореха
-                const showNut = () => {
-                     setNutPosition(generateInitialPosition());
-                     setShowGoldenNut(true);
-                     
-                     // Запускаем таймаут, чтобы орех исчез через 10 секунд
-                     nutTimeoutRef.current = setTimeout(() => {
-                         setShowGoldenNut(false);
-                         // Как только он исчез, немедленно запускаем интервал для следующего появления
-                         startGoldenNutInterval(); 
-                     }, GOLDEN_NUT_DURATION_S * 1000); 
-                     
-                     // Очищаем интервал, чтобы он не запускал много орехов одновременно
-                     if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
-                };
                 
-                const startGoldenNutInterval = () => {
-                    nutIntervalRef.current = setInterval(showNut, GOLDEN_NUT_INTERVAL_S * 1000);
-                };
-                
-                // Начинаем интервал
-                startGoldenNutInterval();
+                // Запускаем новый интервал с нужной задержкой
+                nutIntervalRef.current = setTimeout(showNut, delay * 1000); 
             };
             
-            // Инициализация/очистка Золотого Ореха
+            const startGoldenNutTimer = () => {
+                 // Запускаем таймаут, чтобы орех исчез через 10 секунд
+                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
+                 nutTimeoutRef.current = setTimeout(() => {
+                     setShowGoldenNut(false);
+                     // После исчезновения ореха, запускаем интервал для следующего появления (10 минут)
+                     resetGoldenNutTimer(); 
+                 }, GOLDEN_NUT_DURATION_S * 1000); 
+            };
+            
+            const showNut = () => {
+                setNutPosition(generateInitialPosition());
+                setShowGoldenNut(true);
+                startGoldenNutTimer(); // Запускаем 10-секундный таймаут
+            };
+            
+            // Инициализация/первый запуск Золотого Ореха (10 секунд после загрузки)
             useEffect(() => {
-                 resetGoldenNutTimer(); 
+                 // Изначально запускаем с задержкой 10 секунд
+                 resetGoldenNutTimer(10); 
                 
                  return () => {
                      if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
                      if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
                  };
             }, []); 
-            
+            // --- КОНЕЦ ЛОГИКИ ЗОЛОТОГО ОРЕХА ---
+
             // Функция для генерации позиции (оставлена без изменений)
             const generateInitialPosition = () => {
                 const MAX_X = 90; 
@@ -1026,9 +1012,8 @@
                  if (!showGoldenNut) return;
                  setShowGoldenNut(false);
                  
-                 // Сброс таймера, чтобы следующий орех появился через 10 минут
-                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
-                 resetGoldenNutTimer(); 
+                 // Сброс таймеров Золотого Ореха и запуск нового интервала на 10 минут
+                 resetGoldenNutTimer(GOLDEN_NUT_INTERVAL_S); 
                  
                  const bonuses = [
                      { type: 'instant', name: 'Орехопад', value: 1000, duration: 0 },
@@ -1056,13 +1041,15 @@
                           const updatedBonuses = [...activeBonuses];
                           const existingBonus = updatedBonuses[existingBonusIndex];
                           
-                          // Увеличиваем время (добавляем duration к текущему времени окончания)
-                          const newExpiry = Math.max(existingBonus.expiry || Date.now(), Date.now()) + (chosenBonus.duration * 1000);
+                          const now = Date.now();
+                          // Базовое время, от которого отсчитываем продление, - это текущее время или время истечения бонуса (если он еще не истек)
+                          const baseExpiry = Math.max(existingBonus.expiry || now, now);
+                          const newExpiry = baseExpiry + (chosenBonus.duration * 1000);
                           
                           updatedBonuses[existingBonusIndex] = {
                               ...existingBonus,
                               expiry: newExpiry,
-                              duration: (newExpiry - Date.now()) / 1000 // Обновляем оставшуюся продолжительность
+                              duration: (newExpiry - now) / 1000 // Обновляем оставшуюся продолжительность
                           };
                           setActiveBonuses(updatedBonuses);
                      } else {
@@ -1090,10 +1077,106 @@
             };
             
 
-            // ... handleBuyUpgrade, handleClaimTask, etc. (далее без изменений, только логика объединения для заданий)
+            
+            const handleTap = (e) => {
+                
+                if (!musicStarted) {
+                    if (musicVolume > 0) { 
+                         audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
+                    }
+                    setMusicStarted(true);
+                }
+                
+                if (activeTab !== 'forest' && activeTab !== 'raid') return; 
 
+                if (activeTab === 'forest') {
+                    setTotalTaps(t => t + 1);
+                }
+
+                const gameScreen = e.currentTarget.closest('.game-screen');
+                const rect = gameScreen.getBoundingClientRect();
+                
+                if (activeTab === 'raid' && raidStatus === 'battle') {
+                     handleRaidTap();
+                     return;
+                }
+                
+                if (activeTab === 'forest' && energy >= 1) { 
+                    setEnergy(energy - 1);
+                    
+                    const isCritical = Math.random() < 0.01; 
+                    const critMultiplier = 5;
+                    const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
+                    
+                    playSound(audioTap);
+
+                    setBalance(balance + currentTapValue);
+                    setTotalEarned(t => t + currentTapValue);
+
+                    const newTap = {
+                        id: tapIdCounter++,
+                        value: `+${currentTapValue}`, 
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        isCritical: isCritical 
+                    };
+
+                    setTapAnimations(prev => [...prev, newTap]);
+
+                    setTimeout(() => {
+                        setTapAnimations(prev => prev.filter(tap => tap.id !== newTap.id));
+                    }, 1000);
+                }
+            };
+            
+            const handleBuyUpgrade = (catalog, upgradeId) => {
+                const upgrade = catalog[upgradeId];
+                const currentLevel = levels[upgradeId];
+                
+                const isMaxLevel = upgrade.type === 'level' && currentLevel >= upgrade.maxLevel;
+                
+                if (upgrade.type === 'once' && currentLevel > 0) {
+                    alert('Этот буст уже куплен!');
+                    return;
+                }
+                
+                if (isMaxLevel) {
+                     setShowUpgradeModal({ id: upgradeId, level: currentLevel, isMax: true });
+                     return;
+                }
+
+                const cost = upgrade.type === 'once' 
+                    ? upgrade.baseCost 
+                    : calculateCost(upgrade.baseCost, currentLevel, upgradeId);
+                
+                if (balance >= cost) {
+                    setBalance(balance - cost);
+                    setLevels(prevLevels => ({
+                        ...prevLevels,
+                        [upgradeId]: upgrade.type === 'once' ? 1 : prevLevels[upgradeId] + 1
+                    }));
+
+                    if (upgradeId === 'autoBot' && upgrade.type === 'once') {
+                        setShowBotModal(true); 
+                    } else if (upgradeId === 'energyLimit') {
+                        const newMaxEnergy = BASE_ENERGY + (currentLevel + 1) * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                        setEnergy(newMaxEnergy);
+                    } else if (upgrade.type === 'level') {
+                         const newLevel = currentLevel + 1;
+                         const reachedMax = newLevel === upgrade.maxLevel;
+                         setShowUpgradeModal({ id: upgradeId, level: newLevel, isMax: reachedMax });
+                    }
+                    
+                } else {
+                    alert('Недостаточно $NUT!');
+                }
+            };
+
+            const handleVaultAction = (action, amount) => {
+                // (Логика Сейфа остается заблокированной, т.к. вкладка 'home' заблокирована)
+            };
+            
             const handleClaimTask = (taskChainId) => {
-                // ... (логика получения задания)
                 let task;
                 if (taskChainId === 'tap_chain') {
                     task = TASK_CATALOG.tap_chain[taskLevels.tap_chain];
@@ -1132,12 +1215,15 @@
                      if (existingBonusIndex >= 0) {
                           const updatedBonuses = [...activeBonuses];
                           const existingBonus = updatedBonuses[existingBonusIndex];
-                          const newExpiry = Math.max(existingBonus.expiry || Date.now(), Date.now()) + (bonus.duration * 1000);
+                          
+                          const now = Date.now();
+                          const baseExpiry = Math.max(existingBonus.expiry || now, now);
+                          const newExpiry = baseExpiry + (bonus.duration * 1000);
                           
                           updatedBonuses[existingBonusIndex] = {
                               ...existingBonus,
                               expiry: newExpiry,
-                              duration: (newExpiry - Date.now()) / 1000 
+                              duration: (newExpiry - now) / 1000 
                           };
                           setActiveBonuses(updatedBonuses);
                      } else {
@@ -1163,14 +1249,54 @@
                 setActiveTab('forest'); 
             };
             
-            // ... (остальной код handleClaimDailyReward)
+            const handleClaimDailyReward = () => {
+                if (!isDailyRewardAvailable) return;
+
+                const reward = DAILY_REWARDS_CATALOG[dailyRewardsState.currentDay];
+                
+                if (reward.type === 'nut') {
+                    setBalance(b => b + reward.value);
+                    setTotalEarned(t => t + reward.value);
+                } else if (reward.type === 'bonus') {
+                    const bonus = { ...reward.bonus, id: Date.now() };
+                    setActiveBonuses(prev => [...prev, bonus]);
+                    setTimeout(() => {
+                        setActiveBonuses(prev => prev.filter(b => b.id !== bonus.id));
+                        setShowBonusModal({
+                            icon: '🕰️',
+                            title: 'Бонус Завершился',
+                            message: `Действие бонуса «${reward.bonus.name}» закончилось.`,
+                            button: 'Продолжить'
+                        });
+                    }, reward.bonus.duration * 1000);
+                }
+
+                setDailyRewardsState({
+                    currentDay: (dailyRewardsState.currentDay + 1) % 7, 
+                    lastClaimedTimestamp: Date.now() 
+                });
+                setIsDailyRewardAvailable(false); 
+                
+                setShowDailyRewardsModal(false);
+                setShowBonusModal({
+                    icon: reward.icon,
+                    title: 'Награда получена!',
+                    message: `Вы получили: ${reward.label}!`,
+                    button: 'Отлично!'
+                });
+            };
+
             
+            const startRaid = () => { /* ... */ };
+            const handleRaidTap = () => { /* ... */ };
+            const finishRaid = (isWin) => { /* ... */ };
+            const collectFriendBonus = () => { /* ... */ };
             
+
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
                 if (!isDataLoaded) {
-                    // Пока данные не загружены, показываем черный экран или заглушку
                     return <div style={{flexGrow: 1, backgroundColor: '#1a1a1a'}}></div>; 
                 }
                 
@@ -1376,7 +1502,7 @@
                 <div className="modal-overlay">
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon bot-icon">🤖</div>
-                        <h3 className="success">Добро пожаловать!</h3>
+                        <h3>Добро пожаловать!</h3>
                         <p>
                             Пока вас не было, ваша Белка-Робот собрала:
                         </p>

@@ -136,25 +136,24 @@
         /* === ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ИНДИКАТОРА БОНУСОВ === */
         .active-bonus-indicator {
             position: absolute;
-            top: 10px;
+            /* Смещаем вниз, чтобы не закрывать кнопки Настроек и Заданий */
+            top: 75px; 
             left: 50%;
             transform: translateX(-50%);
             
-            /* КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Используем flex-column для вертикального стекирования плашек */
             display: flex; 
-            flex-direction: column; /* Элементы будут идти сверху вниз */
-            gap: 5px; /* Небольшой отступ между плашками-бонусами */
+            flex-direction: column; 
+            gap: 5px; 
             
             z-index: 60;
         }
 
-        /* Новый стиль для каждой отдельной плашки бонуса */
+        /* Стиль для каждой отдельной плашки бонуса */
         .bonus-indicator-item {
-            /* Теперь это сама плашка: */
             display: flex;
-            flex-direction: row; /* Текст в плашке в одну строку */
+            flex-direction: row; 
             align-items: center;
-            white-space: nowrap; /* Гарантируем одну строку */
+            white-space: nowrap; 
             margin: 0;
             
             padding: 5px 15px; 
@@ -164,8 +163,8 @@
             border-radius: 5px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             text-align: center;
-            animation: flash 0.5s infinite alternate; /* Анимация для самой плашки */
-            font-size: 1.1em; /* Увеличим шрифт для лучшей читаемости */
+            animation: flash 0.5s infinite alternate; 
+            font-size: 1.1em; 
         }
         
         .bonus-indicator-subtext {
@@ -681,7 +680,6 @@
             const [showBonusModal, setShowBonusModal] = useState(null); 
             
             const [showGoldenNut, setShowGoldenNut] = useState(false);
-            // activeBonuses теперь хранит объекты с expiresAt (timestamp)
             const [activeBonuses, setActiveBonuses] = useState([]); 
             const [nutPosition, setNutPosition] = useState({ x: 50, y: 50, isMovingUp: true }); 
             
@@ -713,6 +711,9 @@
             const [raidStatus, setRaidStatus] = useState('idle'); 
             const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
             const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
+
+            // Состояние для принудительной перерисовки таймера каждую секунду
+            const [forceRerender, setForceRerender] = useState(0); 
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -873,34 +874,44 @@
                 return () => clearInterval(timer);
             }, [maxEnergy, rechargeRate, passiveRatePerSec]); 
 
-            // --- НОВЫЙ useEffect для управления истечением времени активных бонусов ---
+            // --- ОБНОВЛЕННЫЙ useEffect для управления истечением времени активных бонусов и обновления таймера ---
             useEffect(() => {
-                if (activeBonuses.length === 0) return;
                 
                 const interval = setInterval(() => {
                     const now = Date.now();
                     
-                    // 1. Проверяем, какие бонусы истекли
-                    const expiredBonuses = activeBonuses.filter(b => b.expiresAt <= now);
-                    
-                    if (expiredBonuses.length > 0) {
-                        // Показываем уведомление о первом истекшем бонусе
-                         const firstExpired = expiredBonuses[0];
-                         setShowBonusModal({
-                             icon: '🕰️',
-                             title: 'Бонус Завершился',
-                             message: `Действие бонуса «${firstExpired.name}» закончилось.`, 
-                             button: 'Продолжить'
-                         });
-                         
-                        // Удаляем все истекшие бонусы
-                         setActiveBonuses(prev => prev.filter(b => b.expiresAt > now));
-                    }
-                }, 1000); // Проверяем каждую секунду
+                    // 1. Проверяем, есть ли истекшие бонусы и удаляем их
+                    setActiveBonuses(prev => {
+                        const expiredBonuses = prev.filter(b => b.expiresAt <= now);
+                        
+                        if (expiredBonuses.length > 0) {
+                            
+                            // Показываем уведомление о первом истекшем бонусе
+                            const firstExpired = expiredBonuses[0];
+                            setShowBonusModal({
+                                icon: '🕰️',
+                                title: 'Бонус Завершился',
+                                message: `Действие бонуса «${firstExpired.name}» закончилось.`, 
+                                button: 'Продолжить'
+                            });
+                            
+                            // Возвращаем только неистекшие бонусы
+                            return prev.filter(b => b.expiresAt > now);
+                        }
+                        
+                        // Если список бонусов не изменился (нет истекших), 
+                        // но таймер должен идти, принудительно обновляем фиктивное состояние
+                        if (prev.length > 0) {
+                             setForceRerender(r => r + 1); // Принудительный ререндер для обновления отображения времени
+                        }
+                        
+                        return prev;
+                    });
+                }, 1000); // Проверяем и обновляем каждую секунду
                 
                 return () => clearInterval(interval);
             }, [activeBonuses]); 
-            // --- КОНЕЦ НОВОГО useEffect ---
+            // --- КОНЕЦ ОБНОВЛЕННОГО useEffect ---
             
             useEffect(() => {
                 const MAX_X = 90; 
@@ -1330,6 +1341,9 @@
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
+                // Используем forceRerender в JSX, чтобы он вызывал обновление при изменении
+                const timerDependentJSX = forceRerender; 
+
                 switch(activeTab) {
                     case 'forest':
                         return (

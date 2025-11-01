@@ -137,13 +137,17 @@
         .active-bonus-indicator {
             position: absolute;
             /* Смещаем вниз, чтобы не закрывать кнопки Настроек и Заданий */
-            top: 75px; 
+            top: 15px; 
             left: 50%;
-            transform: translateX(-50%);
+            /* Сдвигаем влево на 50% и обратно на 50% его собственной ширины для центрирования */
+            transform: translateX(-50%); 
             
             display: flex; 
             flex-direction: column; 
-            gap: 5px; 
+            gap: 3px; /* Уменьшаем вертикальный отступ между плашками */
+            
+            /* Устанавливаем максимальную ширину, чтобы он не заходил на кнопки */
+            max-width: 60%; 
             
             z-index: 60;
         }
@@ -156,7 +160,8 @@
             white-space: nowrap; 
             margin: 0;
             
-            padding: 5px 15px; 
+            /* Уменьшаем padding для компактности */
+            padding: 3px 8px; 
             background: rgba(255, 215, 0, 0.9);
             color: black;
             font-weight: bold;
@@ -164,11 +169,12 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             text-align: center;
             animation: flash 0.5s infinite alternate; 
-            font-size: 1.1em; 
+            /* КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Уменьшаем размер шрифта */
+            font-size: 0.9em; 
         }
         
         .bonus-indicator-subtext {
-            /* Удаляем старые стили, они не нужны */
+             /* Убираем старые стили, они не нужны */
         }
         /* === КОНЕЦ ОБНОВЛЕННЫХ СТИЛЕЙ === */
         

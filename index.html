@@ -166,7 +166,6 @@
         
         .bonus-indicator-item span {
              font-weight: 900; 
-             margin-right: 5px;
         }
         
         .bonus-indicator-subtext {
@@ -703,9 +702,6 @@
             const [totalTaps, setTotalTaps] = useState(0); 
             const [totalEarned, setTotalEarned] = useState(0);
             const [taskLevels, setTaskLevels] = useState(defaultTaskLevels); 
-            const [showTasksModal, setShowTasksModal] = useState(false);
-            const [showTaskClaimModal, setShowTaskClaimModal] = useState(null);
-            
             const [levels, setLevels] = useState(defaultLevels);
             
             const [dailyRewardsState, setDailyRewardsState] = useState(defaultDailyRewardsState); 
@@ -926,6 +922,7 @@
             // Инициализация/первый запуск Золотого Ореха (10 секунд после загрузки)
             useEffect(() => {
                  // Изначально запускаем с задержкой 10 секунд
+                 // Если вы хотите, чтобы он появлялся сразу после загрузки, поставьте delay=0
                  resetGoldenNutTimer(10); 
                 
                  return () => {
@@ -1049,7 +1046,7 @@
                           updatedBonuses[existingBonusIndex] = {
                               ...existingBonus,
                               expiry: newExpiry,
-                              duration: (newExpiry - now) / 1000 // Обновляем оставшуюся продолжительность
+                              duration: (newExpiry - now) / 1000 
                           };
                           setActiveBonuses(updatedBonuses);
                      } else {
@@ -1297,6 +1294,7 @@
             
             const renderActiveScreen = () => {
                 if (!isDataLoaded) {
+                    // Пока данные не загружены, показываем черный экран или заглушку
                     return <div style={{flexGrow: 1, backgroundColor: '#1a1a1a'}}></div>; 
                 }
                 
@@ -1502,7 +1500,7 @@
                 <div className="modal-overlay">
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon bot-icon">🤖</div>
-                        <h3>Добро пожаловать!</h3>
+                        <h3 className="success">Добро пожаловать!</h3>
                         <p>
                             Пока вас не было, ваша Белка-Робот собрала:
                         </p>
@@ -2145,7 +2143,7 @@
             if (task.type === 'milestone') rewardText = getMilestoneRewardText(task.reward);
 
             return (
-                <div className={`task-item ${isComplete ? 'is-claimable' : ''}`}>
+                <div className={`task-item ${is-claimable' : ''}`}>
                     <div className="icon">{task.icon}</div>
                     <div className="task-info">
                         <div className="task-title-row"> 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Squirrel Wars - Prototyp v7.3 (Bot Text Fix)</title>
+    <title>Squirrel Wars - Prototyp v7.3 (Bot Fix)</title>
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -768,37 +768,50 @@
                 const data = localStorage.getItem(SAVE_DATA_KEY);
                 let savedData = null;
                 
+                // 1. Попытка загрузить данные
                 if (data) {
                     try {
                         savedData = JSON.parse(data);
                     } catch (e) {
-                        console.error("Ошибка парсинга JSON из localStorage", e);
+                        console.error("Ошибка парсинга JSON из localStorage, сброс данных.", e);
                         localStorage.removeItem(SAVE_DATA_KEY); 
                     }
                 }
                 
+                // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНИЕ ЧЕРНОГО ЭКРАНА) ---
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
+                // Гарантируем, что taskLevels - это объект, даже если он отсутствует
                 let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
+                // 2. Расчет перманентных бонусов на основе загруженных уровней
                 let tempPermBonusLimit = 0;
                 let tempPermBonusRecharge = 0;
                 
-                if (initialTaskLevels.total_earned_chain !== undefined) {
-                    const completedM = TASK_CATALOG.total_earned_chain.slice(0, initialTaskLevels.total_earned_chain);
+                const taskLevelIndex = initialTaskLevels.total_earned_chain !== undefined ? initialTaskLevels.total_earned_chain : 0;
+                
+                // Используем try-catch для дополнительной защиты, хотя защитили логикой выше
+                try {
+                    const completedM = TASK_CATALOG.total_earned_chain.slice(0, taskLevelIndex);
                     completedM.forEach(task => {
                         if (task.reward.type === 'recharge') tempPermBonusRecharge += task.reward.value;
                         if (task.reward.type === 'limit') tempPermBonusLimit += task.reward.value;
                     });
+                } catch(e) {
+                     console.error("Ошибка при расчете перманентных бонусов.", e);
+                     tempPermBonusLimit = 0;
+                     tempPermBonusRecharge = 0;
                 }
 
-
+                // Рассчитываем максимальную энергию и скорость регенерации с учетом loaded levels
                 const calculatedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + tempPermBonusLimit;
                 const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
 
-                let loadedEnergy = BASE_ENERGY;
+                // 3. Инициализация Энергии и Офлайн-Регенерация
+                let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
                 
                 if (savedData) {
-                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
+                    // Используем savedData.energy, если оно отсутствует, ИНАЧЕ 0 для корректного расчета регенерации с нуля.
+                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : (savedData.energy === 0 ? 0 : BASE_ENERGY); 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
@@ -809,12 +822,14 @@
                         loadedEnergy = savedEnergy;
                     }
                     
+                    // Устанавливаем все остальные данные
                     setBalance(savedData.balance || 0);
                     setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
                     setTotalTaps(savedData.totalTaps || 0);
                     setTotalEarned(savedData.totalEarned || 0);
                     setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
+                    // Расчет офлайн-дохода от Робота (остается без изменений)
                     if (initialLevels.autoBot > 0) {
                         const maxOfflineTime = 7200; 
                         const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
@@ -825,8 +840,12 @@
                             setShowOfflineModal(true);  
                         }
                     }
+                } else {
+                    // Если нет сохраненных данных (новый игрок), гарантируем, что энергия полная
+                    loadedEnergy = BASE_ENERGY;
                 }
                 
+                // Устанавливаем все состояния
                 setLevels(initialLevels);
                 setTaskLevels(initialTaskLevels);
                 setEnergy(loadedEnergy); 
@@ -893,18 +912,17 @@
             }, [maxEnergy, rechargeRate, passiveRatePerSec]); 
             
             
-            // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ ТАЙМЕРА ---
+            // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ БАГА ---
             const resetGoldenNutTimer = (delay = GOLDEN_NUT_INTERVAL_S) => {
-                // Очищаем существующие таймеры, чтобы предотвратить дублирование
                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
                 if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
                 
-                // Запускаем новый интервал с нужной задержкой
+                // Устанавливаем главный интервал для появления следующего ореха
                 nutIntervalRef.current = setTimeout(showNut, delay * 1000); 
             };
             
             const startGoldenNutTimer = () => {
-                 // Запускаем таймаут, чтобы орех исчез через 10 секунд
+                 // Запускаем 10-секундный таймаут на исчезновение
                  if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
                  nutTimeoutRef.current = setTimeout(() => {
                      setShowGoldenNut(false);
@@ -921,9 +939,7 @@
             
             // Инициализация/первый запуск Золотого Ореха (10 секунд после загрузки)
             useEffect(() => {
-                 // Изначально запускаем с задержкой 10 секунд
-                 // Если вы хотите, чтобы он появлялся сразу после загрузки, поставьте delay=0
-                 resetGoldenNutTimer(10); 
+                 resetGoldenNutTimer(10); // 10 секунд задержка после загрузки игры
                 
                  return () => {
                      if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);

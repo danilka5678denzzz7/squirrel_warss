@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -138,7 +139,7 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            /* Используем flex для центрирования содержимого */
+            /* ИСПРАВЛЕНИЕ: Используем inline-block, чтобы элемент принимал ширину контента */
             display: flex; 
             justify-content: center;
             align-items: center; 
@@ -154,7 +155,7 @@
             animation: flash 0.5s infinite alternate;
             
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            /* Убрал inline-block, заменил на flex/justify-content */
+            text-align: center; /* Центрируем текст внутри плашки */
         }
         
         .bonus-indicator-item {
@@ -572,7 +573,7 @@
         const TASK_CATALOG = {
             'tap_chain': [
                 { id: 'tap_1', name: 'Первый хруст', type: 'tap', target: 100, reward: 150, icon: '👆', details: 'Просто нажмите на белку 100 раз, чтобы получить свою первую награду.' },
-                { id: id: 'tap_2', name: 'Мастер клика', type: 'tap', target: 500, reward: 500, icon: '👆', details: 'Продолжайте тапать! Достигните 500 кликов для следующего приза.' },
+                { id: 'tap_2', name: 'Мастер клика', type: 'tap', target: 500, reward: 500, icon: '👆', details: 'Продолжайте тапать! Достигните 500 кликов для следующего приза.' },
                 { id: 'tap_3', name: 'Повелитель орехов', type: 'tap', target: 1000, reward: 1000, icon: '👆', details: '1000 кликов покажут, что вы серьезно настроены.' },
                 { id: 'tap_4', name: 'Турбо-палец', type: 'tap', target: 5000, reward: 2000, icon: '👆', details: '5000 кликов! Ваши пальцы еще не устали?' },
                 { id: 'tap_5', name: 'Марафонец', type: 'tap', target: 10000, reward: 5000, icon: '👆', details: '10,000 кликов. Впечатляющая выносливость!' },
@@ -782,45 +783,52 @@
                     }
                 }
                 
+                // Загружаем уровни и таск-уровни (для расчета перманентных бонусов)
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
-                setLevels(initialLevels);
+                let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
-                // Рассчет maxEnergy и rechargeRate на основе загруженных/дефолтных уровней
-                // Используем здесь временные значения, так как permBonusLimit зависит от taskLevels, которые еще могут не быть полностью загружены. 
-                // Но для расчета офлайн-регенерации нам нужно максимально точное значение.
-                const tempMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL; 
-                const tempRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL); 
+                // Рассчитываем перманентные бонусы на основе загруженных уровней
+                let tempPermBonusLimit = 0;
+                let tempPermBonusRecharge = 0;
+                const completedM = TASK_CATALOG.total_earned_chain.slice(0, initialTaskLevels.total_earned_chain);
+                completedM.forEach(task => {
+                    if (task.reward.type === 'recharge') tempPermBonusRecharge += task.reward.value;
+                    if (task.reward.type === 'limit') tempPermBonusLimit += task.reward.value;
+                });
+
+                // Рассчитываем максимальную энергию и скорость регенерации с учетом loaded levels
+                const calculatedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + tempPermBonusLimit;
+                const calculatedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + tempPermBonusRecharge; 
 
                 // 2. Инициализация Энергии и Офлайн-Регенерация
                 let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
                 
                 if (savedData) {
-                    // Используем savedData.energy, если оно есть, иначе 0 для корректного расчета
+                    // Используем savedData.energy, если оно есть, ИНАЧЕ 0.
+                    // Это решает проблему "скачка до 1000", если энергия была потрачена.
                     const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
-                    // --- РЕШЕНИЕ ПРОБЛЕМЫ 1 & 2 (Офлайн-Регенерация Энергии) ---
-                    
+                    // --- РЕШЕНИЕ ПРОБЛЕМЫ: Офлайн-Регенерация Энергии ---
                     if (timeDiffSeconds > 0) {
-                        const regeneratedEnergy = timeDiffSeconds * tempRechargeRate;
-                        loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, tempMaxEnergy);
+                        const regeneratedEnergy = timeDiffSeconds * calculatedRechargeRate;
+                        // Регенерируем энергию, но не превышаем Максимальный лимит
+                        loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, calculatedMaxEnergy);
                     } else {
-                        // Если разница во времени 0, просто используем сохраненное значение.
                         loadedEnergy = savedEnergy;
                     }
                     
-                    // --- КОНЕЦ РЕШЕНИЯ ПРОБЛЕМЫ 1 & 2 ---
+                    // --- КОНЕЦ РЕШЕНИЯ ПРОБЛЕМЫ ---
                     
                     setBalance(savedData.balance || 0);
-                    setTaskLevels(savedData.taskLevels || defaultTaskLevels);
                     setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
                     setTotalTaps(savedData.totalTaps || 0);
                     setTotalEarned(savedData.totalEarned || 0);
                     setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
                     // Расчет офлайн-дохода от Робота (остается без изменений)
-                    if (savedData.levels.autoBot > 0) {
+                    if (initialLevels.autoBot > 0) {
                         const maxOfflineTime = 7200; 
                         const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
                         const earnings = Math.floor(effectiveTime * BASE_BOT_RATE);
@@ -832,8 +840,9 @@
                     }
                 }
                 
-                // Для нового игрока или при ошибке чтения savedEnergy будет BASE_ENERGY (1000)
-                // Для игравшего игрока будет восстановленное/регенерированное значение
+                // Устанавливаем все состояния
+                setLevels(initialLevels);
+                setTaskLevels(initialTaskLevels);
                 setEnergy(loadedEnergy); 
 
                 const savedTimestamp = (savedData && savedData.dailyRewardsState) ? savedData.dailyRewardsState.lastClaimedTimestamp : null;
@@ -847,18 +856,19 @@
                 setIsDataLoaded(true); 
             }, []); 
             
+            // Сохранение данных (использует energy, которую мы корректно загрузили/рассчитали)
             useEffect(() => {
                 if (isDataLoaded) { 
                     const dataToSave = {
                         balance,
-                        energy, // Теперь сохраняем актуальное значение энергии
+                        energy, 
                         levels,
                         taskLevels,
                         dailyRewardsState,
                         totalTaps,
                         totalEarned,
                         musicVolume, 
-                        lastOnlineTimestamp: Date.now() // Сохраняем текущее время
+                        lastOnlineTimestamp: Date.now() 
                     };
                     localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave));
                 }
@@ -1294,6 +1304,11 @@
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
+                if (!isDataLoaded) {
+                    // Пока данные не загружены, показываем черный экран или заглушку
+                    return <div style={{flexGrow: 1, backgroundColor: '#1a1a1a'}}></div>; 
+                }
+                
                 switch(activeTab) {
                     case 'forest':
                         return (
@@ -2002,7 +2017,7 @@
             const [infoTaskId, setInfoTaskId] = useState(null); 
             
             const tapTaskLevel = taskLevels.tap_chain;
-            const tapTask = TASK_CATALOG.tap_chain[tapTaskLevel];
+            const tapTask = TASK_CATALOG.tap_chain[taskLevels.tap_chain];
             
             const balanceTaskLevel = taskLevels.balance_chain;
             const balanceTask = TASK_CATALOG.balance_chain[taskLevels.balance_chain];

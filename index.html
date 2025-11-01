@@ -781,7 +781,7 @@
                     }
                 }
                 
-                // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНИЕ ЧЕРНОГО ЭКРАНА) ---
+                // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ ---
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
                 let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
@@ -909,7 +909,7 @@
             }, [maxEnergy, rechargeRate, passiveRatePerSec]); 
             
             
-            // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ БАГА ---
+            // --- ЛОГИКА ЗОЛОТОГО ОРЕХА: ИСПРАВЛЕНИЕ ОБЪЕДИНЕНИЯ ---
             const resetGoldenNutTimer = (delay = GOLDEN_NUT_INTERVAL_S) => {
                 if (nutTimeoutRef.current) clearTimeout(nutTimeoutRef.current);
                 if (nutIntervalRef.current) clearInterval(nutIntervalRef.current);
@@ -1305,8 +1305,7 @@
             // --- Рендеринг (Отрисовка) ---
             
             const renderActiveScreen = () => {
-                // ИСПРАВЛЕНИЕ ЧЕРНОГО ЭКРАНА:
-                // Возвращаем прозрачный div, чтобы не блокировать Header, EnergyBar и TabBar,
+                // ИСПРАВЛЕНИЕ: Возвращаем прозрачный div, чтобы не блокировать Header, EnergyBar и TabBar,
                 // пока isDataLoaded не станет true.
                 if (!isDataLoaded) {
                     return <div style={{flexGrow: 1, backgroundColor: 'transparent'}}></div>; 
@@ -1318,7 +1317,7 @@
                             <div 
                                 className="forest-content" 
                                 onClick={handleTap} 
-                                // onTouchStart={handleTouchStart} // Удалено, т.к. touch-action: manipulation в CSS должен помочь
+                                onTouchStart={handleTap} // Используем handleTap для touch
                             >
                                 <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
@@ -1407,7 +1406,18 @@
                     case 'squad':
                         return <LockedScreen tab={activeTab} />;
                     default:
-                        return <div className="forest-content" onClick={handleTap} onTouchStart={handleTouchStart}><ForestScreen /></div>;
+                        // Возвращаем ForestScreen по умолчанию, если activeTab не определен
+                        return (
+                            <div className="forest-content" onClick={handleTap} onTouchStart={handleTap}>
+                                <ForestScreen 
+                                    onTasksClick={() => setShowTasksModal(true)} 
+                                    completedTasks={completedTaskCount}
+                                    onDailyRewardClick={() => setShowDailyRewardsModal(true)}
+                                    isDailyRewardAvailable={isDailyRewardAvailable}
+                                    onSettingsClick={() => setShowSettingsModal(true)}
+                                />
+                            </div>
+                        );
                 }
             };
             
@@ -1674,6 +1684,8 @@
             let title = 'Награда получена!'; 
             let icon = task.icon;
             let buttonText = 'Забрать!';
+            // Установка titleClass на основании наличия isMax
+            const titleClass = 'success'; // Предполагаем успех, так как это модальное окно для получения награды
 
             if (task.type === 'tap') {
                 rewardMessage = `Вы получаете +${formatBalance(task.reward)} $NUT!`;
@@ -2188,7 +2200,7 @@
         }
 
 
-        // ===>>> ИЗМЕНЕНИЕ 3: ЛОГИКА UpgradeItem <<<===
+        // ===>>> ЛОГИКА UpgradeItem <<<===
         function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 

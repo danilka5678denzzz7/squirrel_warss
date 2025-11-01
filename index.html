@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Squirrel Wars - Prototyp v7.3 (Bot Fix)</title>
+    <title>Squirrel Wars - Prototyp v7.3 (Stable Fix)</title>
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -734,8 +734,10 @@
             let permBonusRecharge = 0;
             let permBonusLimit = 0;
             
-            const completedMilestones = TASK_CATALOG.total_earned_chain.slice(0, taskLevels.total_earned_chain);
-            completedMilestones.forEach(task => {
+            // ************ БАГФИКС: Обновленный рендеринг бонусов (для текущего цикла) ************
+            // Эта часть кода выполняется при каждом рендере, но использует актуальное состояние.
+            const currentCompletedMilestones = TASK_CATALOG.total_earned_chain.slice(0, taskLevels.total_earned_chain);
+            currentCompletedMilestones.forEach(task => {
                 if (task.reward.type === 'click') permBonusClick += task.reward.value;
                 if (task.reward.type === 'recharge') permBonusRecharge += task.reward.value;
                 if (task.reward.type === 'limit') permBonusLimit += task.reward.value;
@@ -762,6 +764,7 @@
             const completedMilestoneTasks = (currentEarnedTask && totalEarned >= currentEarnedTask.target) ? 1 : 0;
             
             const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks;
+            // ************ КОНЕЦ БАГФИКСА: Обновленный рендеринг бонусов ************
             
             
             useEffect(() => {
@@ -780,7 +783,6 @@
                 
                 // --- ГАРАНТИРОВАННАЯ ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНИЕ ЧЕРНОГО ЭКРАНА) ---
                 let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
-                // Гарантируем, что taskLevels - это объект, даже если он отсутствует
                 let initialTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
                 
                 // 2. Расчет перманентных бонусов на основе загруженных уровней
@@ -789,7 +791,6 @@
                 
                 const taskLevelIndex = initialTaskLevels.total_earned_chain !== undefined ? initialTaskLevels.total_earned_chain : 0;
                 
-                // Используем try-catch для дополнительной защиты, хотя защитили логикой выше
                 try {
                     const completedM = TASK_CATALOG.total_earned_chain.slice(0, taskLevelIndex);
                     completedM.forEach(task => {
@@ -810,8 +811,8 @@
                 let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
                 
                 if (savedData) {
-                    // Используем savedData.energy, если оно отсутствует, ИНАЧЕ 0 для корректного расчета регенерации с нуля.
-                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : (savedData.energy === 0 ? 0 : BASE_ENERGY); 
+                    // Используем savedData.energy, если оно есть, ИНАЧЕ 0 для корректного расчета регенерации с нуля.
+                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : 0; 
                     const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
                     const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
                     
@@ -829,7 +830,6 @@
                     setTotalEarned(savedData.totalEarned || 0);
                     setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
-                    // Расчет офлайн-дохода от Робота (остается без изменений)
                     if (initialLevels.autoBot > 0) {
                         const maxOfflineTime = 7200; 
                         const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
@@ -841,7 +841,6 @@
                         }
                     }
                 } else {
-                    // Если нет сохраненных данных (новый игрок), гарантируем, что энергия полная
                     loadedEnergy = BASE_ENERGY;
                 }
                 
@@ -1055,7 +1054,6 @@
                           const existingBonus = updatedBonuses[existingBonusIndex];
                           
                           const now = Date.now();
-                          // Базовое время, от которого отсчитываем продление, - это текущее время или время истечения бонуса (если он еще не истек)
                           const baseExpiry = Math.max(existingBonus.expiry || now, now);
                           const newExpiry = baseExpiry + (chosenBonus.duration * 1000);
                           
@@ -1885,13 +1883,19 @@
             
             // ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТСУТСТВИЯ ИЗОБРАЖЕНИЯ (FOLBACK)
             const handleImageError = (e, fallbackEmoji) => {
+                // Если произошла ошибка загрузки изображения, скрываем <img>
                 e.currentTarget.style.display = 'none'; 
-                const span = document.createElement('span');
-                span.textContent = fallbackEmoji;
-                span.style.fontSize = '2.5em';
-                span.style.color = 'white';
-                span.style.textShadow = '0 0 5px black';
-                e.currentTarget.parentNode.insertBefore(span, e.currentTarget);
+                
+                // Проверяем, был ли уже вставлен эмодзи (чтобы не дублировать)
+                if (!e.currentTarget.parentNode.querySelector('.fallback-emoji')) {
+                    const span = document.createElement('span');
+                    span.textContent = fallbackEmoji;
+                    span.className = 'fallback-emoji'; // Добавляем класс для идентификации
+                    span.style.fontSize = '2.5em';
+                    span.style.color = 'white';
+                    span.style.textShadow = '0 0 5px black';
+                    e.currentTarget.parentNode.insertBefore(span, e.currentTarget);
+                }
             };
 
             return (

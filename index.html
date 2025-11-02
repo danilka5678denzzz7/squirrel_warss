@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
         /* Обнуление и базовые стили */
         body, html {
@@ -19,6 +21,19 @@
             color: white;
             overflow: hidden; 
         }
+
+        /* === СТИЛИ ЛОАДЕРА === */
+        #loader {
+            position: fixed;
+            /* ... и остальные стили из моего прошлого ответа ... */
+        }
+        .loader-spinner {
+            /* ... стили ... */
+        }
+        @keyframes spin {
+            /* ... стили ... */
+        }
+        /* === КОНЕЦ СТИЛЕЙ ЛОАДЕРА === */
 
         #root {
             height: 100vh;
@@ -498,11 +513,29 @@
 </head>
 <body>
 
+    <div id="loader">
+        <div class="loader-spinner"></div>
+        <p>Загрузка данных...</p>
+    </div>
+
     <div id="root"></div>
 
     <script type="text/babel">
         
         const { useState, useEffect, useRef } = React;
+
+        // --- Утилита Debounce (чтобы не спамить в CloudStorage) ---
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         let tapIdCounter = 0;
         
@@ -671,7 +704,17 @@
         const defaultTaskLevels = { tap_chain: 0, balance_chain: 0, total_earned_chain: 0 };
         const defaultDailyRewardsState = { currentDay: 0, lastClaimedTimestamp: null };
 
+        // --- Инициализация Telegram WebApp ---
+        const tg = window.Telegram?.WebApp;
+        // Проверяем, что мы в Telegram и initData не пустая
+        const isTelegram = tg && tg.initData !== ""; 
 
+        if (isTelegram) {
+            // Разворачиваем приложение на весь экран
+            tg.expand();
+        }
+
+        // ------------------------------------
         // =================================================================
         // Главный Компонент Игры (App)
         // =================================================================
@@ -762,91 +805,220 @@
             const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks;
             
             
+            // --- НОВАЯ ЛОГИКА АСИНХРОННОЙ ЗАГРУЗКИ ---
             useEffect(() => {
-                const data = localStorage.getItem(SAVE_DATA_KEY);
-                let savedData = null;
                 
-                // 1. Попытка загрузить данные
-                if (data) {
+                // Создаем async функцию для загрузки
+                const loadGameData = async () => {
+                    let savedData = null;
+                    
                     try {
-                        savedData = JSON.parse(data);
+                        if (isTelegram) {
+                            // --- Загрузка из Telegram CloudStorage ---
+                            console.log("Загрузка из Telegram Cloud...");
+                            
+                            // Оборачиваем callback в Promise
+                            const data = await new Promise((resolve, reject) => {
+                                tg.CloudStorage.getItems([SAVE_DATA_KEY], (err, result) => {
+                                    if (err) {
+                                        console.error("Ошибка загрузки из Telegram Cloud:", err);
+                                        return reject(err);
+                                    }
+                                    resolve(result);
+                                });
+                            });
+                            
+                            // Если данные есть, парсим их
+                            if (data && data[SAVE_DATA_KEY]) {
+                                savedData = JSON.parse(data[SAVE_DATA_KEY]);
+                                console.log("Данные успешно загружены из TG:", savedData);
+                            } else {
+                                console.log("В TG Cloud пусто, новый игрок.");
+                            }
+                            
+                        } else {
+                            // --- Загрузка из LocalStorage ---
+                            console.log("Загрузка из LocalStorage (не в TG)...");
+                            const data = localStorage.getItem(SAVE_DATA_KEY);
+                            if (data) {
+                                savedData = JSON.parse(data);
+                                console.log("Данные успешно загружены из LS:", savedData);
+                            } else {
+                                console.log("В LS пусто, новый игрок.");
+                            }
+                        }
                     } catch (e) {
-                        console.error("Ошибка парсинга JSON из localStorage", e);
-                        localStorage.removeItem(SAVE_DATA_KEY); 
-                    }
-                }
-                
-                let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
-                setLevels(initialLevels);
-                
-                // Рассчет maxEnergy и rechargeRate на основе загруженных/дефолтных уровней
-                const loadedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-                const loadedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + rechargeBonus + permBonusRecharge; 
-
-                // 2. Инициализация Энергии и Офлайн-Регенерация
-                let loadedEnergy = BASE_ENERGY; // Дефолт для нового игрока
-                
-                if (savedData) {
-                    const savedEnergy = savedData.energy !== undefined ? savedData.energy : BASE_ENERGY;
-                    const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
-                    const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
-                    
-                    if (timeDiffSeconds > 0) {
-                        const regeneratedEnergy = timeDiffSeconds * loadedRechargeRate;
-                        loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, loadedMaxEnergy);
-                    } else {
-                        loadedEnergy = savedEnergy;
-                    }
-                    
-                    setBalance(savedData.balance || 0);
-                    setTaskLevels(savedData.taskLevels || defaultTaskLevels);
-                    setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
-                    setTotalTaps(savedData.totalTaps || 0);
-                    setTotalEarned(savedData.totalEarned || 0);
-                    setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
-
-                    // Расчет офлайн-дохода от Робота 
-                    if (savedData.levels.autoBot > 0) {
-                        const maxOfflineTime = 7200; 
-                        const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
-                        const earnings = Math.floor(effectiveTime * BASE_BOT_RATE);
-
-                        if (earnings > 0) {
-                            setOfflineEarnings(earnings); 
-                            setShowOfflineModal(true);  
+                        console.error("Ошибка парсинга JSON при загрузке:", e);
+                        // Если ошибка, чистим хранилище
+                        if (!isTelegram) {
+                             localStorage.removeItem(SAVE_DATA_KEY); 
+                        } else {
+                             tg.CloudStorage.removeItem(SAVE_DATA_KEY);
                         }
                     }
-                }
-                
-                setEnergy(loadedEnergy); // Устанавливаем энергию после всех расчетов
 
-                const savedTimestamp = (savedData && savedData.dailyRewardsState) ? savedData.dailyRewardsState.lastClaimedTimestamp : null;
-                const today = new Date().toDateString(); 
-                const lastClaimedDate = savedTimestamp ? new Date(savedTimestamp).toDateString() : null;
+                    //
+                    // ВЕСЬ КОД НИЖЕ - ЭТО ВАШ СТАРЫЙ КОД ИНИЦИАЛИЗАЦИИ
+                    // (я просто скопировал его из вашего удаленного useEffect)
+                    //
+                    
+                    let initialLevels = savedData ? savedData.levels || defaultLevels : defaultLevels;
+                    setLevels(initialLevels);
+                    
+                    // Рассчет maxEnergy и rechargeRate на основе загруженных/дефолтных уровней
+                    // (Мы должны пересчитать permBonusLimit здесь, т.к. taskLevels еще не установлен)
+                    const loadedTaskLevels = savedData ? savedData.taskLevels || defaultTaskLevels : defaultTaskLevels;
+                    let initialPermBonusLimit = 0;
+                    TASK_CATALOG.total_earned_chain.slice(0, loadedTaskLevels.total_earned_chain).forEach(task => {
+                        if (task.reward.type === 'limit') initialPermBonusLimit += task.reward.value;
+                    });
+                    
+                    // Пересчет permBonusRecharge
+                    let initialPermBonusRecharge = 0;
+                    TASK_CATALOG.total_earned_chain.slice(0, loadedTaskLevels.total_earned_chain).forEach(task => {
+                        if (task.reward.type === 'recharge') initialPermBonusRecharge += task.reward.value;
+                    });
+
+                    const loadedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + initialPermBonusLimit;
+                    const loadedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + rechargeBonus + initialPermBonusRecharge; 
+
+                    let loadedEnergy = BASE_ENERGY;
+                    
+                    if (savedData) {
+                        const savedEnergy = savedData.energy !== undefined ? savedData.energy : BASE_ENERGY;
+                        const lastOnlineTimestamp = savedData.lastOnlineTimestamp || Date.now();
+                        const timeDiffSeconds = Math.floor((Date.now() - lastOnlineTimestamp) / 1000);
+                        
+                        if (timeDiffSeconds > 0) {
+                            const regeneratedEnergy = timeDiffSeconds * loadedRechargeRate;
+                            loadedEnergy = Math.min(savedEnergy + regeneratedEnergy, loadedMaxEnergy);
+                        } else {
+                            loadedEnergy = savedEnergy;
+                        }
+                        
+                        setBalance(savedData.balance || 0);
+                        setTaskLevels(loadedTaskLevels); // Используем загруженные уровни
+                        setDailyRewardsState(savedData.dailyRewardsState || defaultDailyRewardsState);
+                        setTotalTaps(savedData.totalTaps || 0);
+                        setTotalEarned(savedData.totalEarned || 0);
+                        setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
+
+                        if (savedData.levels.autoBot > 0) {
+                            const maxOfflineTime = 7200; 
+                            const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
+                            const earnings = Math.floor(effectiveTime * BASE_BOT_RATE);
+
+                            if (earnings > 0) {
+                                setOfflineEarnings(earnings); 
+                                setShowOfflineModal(true);  
+                            }
+                        }
+                    }
+                    
+                    setEnergy(loadedEnergy); 
+
+                    const savedTimestamp = (savedData && savedData.dailyRewardsState) ? savedData.dailyRewardsState.lastClaimedTimestamp : null;
+                    const today = new Date().toDateString(); 
+                    const lastClaimedDate = savedTimestamp ? new Date(savedTimestamp).toDateString() : null;
+                    
+                    if (today !== lastClaimedDate) {
+                        setIsDailyRewardAvailable(true); 
+                    }
+                    
+                    // Сообщаем Telegram, что приложение готово
+                    if (isTelegram) {
+                        tg.ready(); 
+                    }
+                    
+                    // Прячем HTML лоадер (из Шага 1)
+                    document.getElementById('loader').style.display = 'none';
+                    
+                    // Активируем игру
+                    setIsDataLoaded(true); 
+                };
                 
-                if (today !== lastClaimedDate) {
-                    setIsDailyRewardAvailable(true); 
-                }
+                // Запускаем асинхронную загрузку
+                loadGameData();
                 
-                setIsDataLoaded(true); 
-            }, []); 
+            }, []); // <-- Пустой массив зависимостей ОБЯЗАТЕЛЕН
             
-            useEffect(() => {
-                if (isDataLoaded) { 
-                    const dataToSave = {
-                        balance,
-                        energy, 
-                        levels,
-                        taskLevels,
-                        dailyRewardsState,
-                        totalTaps,
-                        totalEarned,
-                        musicVolume, 
-                        lastOnlineTimestamp: Date.now() 
-                    };
-                    localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave));
-                }
-            }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, isDataLoaded, musicVolume]);
+            // --- КОНЕЦ НОВОЙ ЛОГИКИ ЗАГРУЗКИ ---
+            
+            // --- НОВАЯ ЛОГИКА АСИНХРОННОГО СОХРАНЕНИЯ ---
+                        
+                        // Используем Ref, чтобы хранить ссылку на debounced-функцию
+                        // (useRef - это "коробка" для хранения чего-либо, 
+                        // которая не меняется при перерисовках)
+                        const debouncedSaveRef = useRef(null);
+
+                        // Асинхронная функция сохранения
+                        const saveGameData = async (dataToSave) => {
+                            console.log("Попытка сохранения данных...");
+                            try {
+                                if (isTelegram) {
+                                    // --- Сохранение в Telegram CloudStorage (Асинхронно) ---
+                                    // Опять оборачиваем в Promise, чтобы "ждать" (await)
+                                    await new Promise((resolve, reject) => {
+                                        // Используем tg.CloudStorage.setItem
+                                        tg.CloudStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave), (err, success) => {
+                                            if (err) {
+                                                console.error("Ошибка сохранения в Telegram Cloud:", err);
+                                                return reject(err);
+                                            }
+                                            if (success) {
+                                                console.log("Успешно сохранено в Telegram Cloud");
+                                                resolve(success);
+                                            }
+                                        });
+                                    });
+                                } else {
+                                    // --- Сохранение в LocalStorage (Синхронно) ---
+                                    // (Если мы не в Telegram, делаем как раньше)
+                                    localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave));
+                                    console.log("Успешно сохранено в LocalStorage (не в TG)");
+                                }
+                            } catch (error) {
+                                console.error("Общая ошибка сохранения данных:", error);
+                                if(isTelegram) {
+                                    tg.showAlert("Произошла ошибка при сохранении вашего прогресса.");
+                                }
+                            }
+                        };
+                        
+                        // Создаем "отложенную" (debounced) функцию только один раз
+                        // (Это функция из Шага 2.2)
+                        if (!debouncedSaveRef.current) {
+                            // Задержка 1500 мс (1.5 сек)
+                            // Мы говорим: "Возьми нашу функцию saveGameData и сделай так,
+                            // чтобы она срабатывала не сразу, а через 1.5 сек ПОСЛЕ того,
+                            // как ее в последний раз вызвали"
+                            debouncedSaveRef.current = debounce((data) => saveGameData(data), 1500);
+                        }
+
+                        // Этот useEffect следит за изменениями и вызывает "отложенное" сохранение
+                        // (Он заменяет тот, что ты удалил)
+                        useEffect(() => {
+                            // Сохраняем только если данные уже были загружены
+                            if (isDataLoaded) { 
+                                const dataToSave = {
+                                    balance,
+                                    energy, 
+                                    levels,
+                                    taskLevels,
+                                    dailyRewardsState,
+                                    totalTaps,
+                                    totalEarned,
+                                    musicVolume, 
+                                    lastOnlineTimestamp: Date.now() 
+                                };
+                                
+                                // ВАЖНО: Мы вызываем не 'saveGameData' напрямую,
+                                // а нашу "отложенную" версию из "коробки" (Ref)
+                                debouncedSaveRef.current(dataToSave);
+                            }
+                        }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, isDataLoaded, musicVolume]); // <-- Зависимости те же, что и раньше!
+                        
+                        // --- КОНЕЦ НОВОЙ ЛОГИКИ СОХРАНЕНИЯ ---
 
 
             
@@ -1448,98 +1620,110 @@
                 }
             };
             
-            return (
-                <div className="app-container">
-                    
-                    <Header 
-                        balance={balance} 
-                        passiveRate={passiveRatePerSec} 
-                    />
-                    
-                    <div className="game-screen">
-                        {renderActiveScreen()}
-                    </div>
-                    
-                    {showBotModal && <BotPurchaseModal onClose={() => setShowBotModal(false)} rate={BASE_BOT_RATE} />}
-                    {showUpgradeModal && (
-                        <UpgradeSuccessModal 
-                            upgradeId={showUpgradeModal.id}
-                            newLevel={showUpgradeModal.level}
-                            isMax={showUpgradeModal.isMax}
-                            onClose={() => setShowUpgradeModal(null)}
-                        />
-                    )}
-                    {showBonusModal && (
-                        <BonusNotificationModal 
-                            details={showBonusModal}
-                            onClose={() => setShowBonusModal(null)}
-                        />
-                    )}
-                    {showTasksModal && (
-                        <TasksModal 
-                            onClose={() => setShowTasksModal(false)}
-                            totalTaps={totalTaps}
-                            balance={balance} 
-                            totalEarned={totalEarned} 
-                            taskLevels={taskLevels}
-                            onClaim={handleClaimTask}
-                            completedTapTasks={completedTapTasks}
-                            completedBalanceTasks={completedBalanceTasks}
-                            completedMilestoneTasks={completedMilestoneTasks}
-                        />
-                    )}
-                    
-                    {showTaskClaimModal && (
-                        <TaskClaimModal
-                            task={showTaskClaimModal}
-                            onClaim={() => confirmClaimTask(showTaskClaimModal)}
-                            onClose={() => setShowTaskClaimModal(null)}
-                        />
-                    )}
-                    
-                    {showDailyRewardsModal && (
-                        <DailyRewardsModal
-                            onClose={() => setShowDailyRewardsModal(false)}
-                            rewardsCatalog={DAILY_REWARDS_CATALOG}
-                            currentState={dailyRewardsState}
-                            isAvailable={isDailyRewardAvailable}
-                            onClaim={handleClaimDailyReward}
-                            onShowComeBackModal={() => setShowComeBackModal(true)}
-                        />
-                    )}
-                    
-                    {showComeBackModal && (
-                        <ComeBackTomorrowModal onClose={() => setShowComeBackModal(false)} />
-                    )}
-                    
-                    {showSettingsModal && (
-                        <SettingsModal
-                            onClose={() => setShowSettingsModal(false)}
-                            musicVolume={musicVolume}
-                            onVolumeChange={setMusicVolume}
-                        />
-                    )}
-                    
-                    {showOfflineModal && (
-                        <OfflineEarningsModal
-                            earnings={offlineEarnings}
-                            onClaim={() => {
-                                setBalance(b => b + offlineEarnings);
-                                setTotalEarned(t => t + offlineEarnings);
-                                setShowOfflineModal(false);
-                                setOfflineEarnings(0);
-                            }}
-                        />
-                    )}
+            // --- ОБНОВЛЕННЫЙ РЕНДЕР С ПРОВЕРКОЙ ЗАГРУЗКИ ---
+                        
+                        // Если данные ЕЩЕ НЕ загружены (isDataLoaded === false),
+                        // мы ничего не рендерим (React возвращает "пустоту")
+                        // В это время пользователь видит HTML-лоадер из Шага 1.
+                        if (!isDataLoaded) {
+                            return null;
+                        }
+                        
+                        // Если данные загружены (isDataLoaded === true), 
+                        // мы показываем игру, как и раньше.
+                        // (ЭТО ВЕСЬ ТВОЙ СТАРЫЙ RETURN-БЛОК, СКОПИРОВАННЫЙ ОДИН В ОДИН)
+                        return (
+                            <div className="app-container">
+                                
+                                <Header 
+                                    balance={balance} 
+                                    passiveRate={passiveRatePerSec} 
+                                />
+                                
+                                <div className="game-screen">
+                                    {renderActiveScreen()}
+                                </div>
+                                
+                                {showBotModal && <BotPurchaseModal onClose={() => setShowBotModal(false)} rate={BASE_BOT_RATE} />}
+                                {showUpgradeModal && (
+                                    <UpgradeSuccessModal 
+                                        upgradeId={showUpgradeModal.id}
+                                        newLevel={showUpgradeModal.level}
+                                        isMax={showUpgradeModal.isMax}
+                                        onClose={() => setShowUpgradeModal(null)}
+                                    />
+                                )}
+                                {showBonusModal && (
+                                    <BonusNotificationModal 
+                                        details={showBonusModal}
+                                        onClose={() => setShowBonusModal(null)}
+                                    />
+                                )}
+                                {showTasksModal && (
+                                    <TasksModal 
+                                        onClose={() => setShowTasksModal(false)}
+                                        totalTaps={totalTaps}
+                                        balance={balance} 
+                                        totalEarned={totalEarned} 
+                                        taskLevels={taskLevels}
+                                        onClaim={handleClaimTask}
+                                        completedTapTasks={completedTapTasks}
+                                        completedBalanceTasks={completedBalanceTasks}
+                                        completedMilestoneTasks={completedMilestoneTasks}
+                                    />
+                                )}
+                                
+                                {showTaskClaimModal && (
+                                    <TaskClaimModal
+                                        task={showTaskClaimModal}
+                                        onClaim={() => confirmClaimTask(showTaskClaimModal)}
+                                        onClose={() => setShowTaskClaimModal(null)}
+                                    />
+                                )}
+                                
+                                {showDailyRewardsModal && (
+                                    <DailyRewardsModal
+                                        onClose={() => setShowDailyRewardsModal(false)}
+                                        rewardsCatalog={DAILY_REWARDS_CATALOG}
+                                        currentState={dailyRewardsState}
+                                        isAvailable={isDailyRewardAvailable}
+                                        onClaim={handleClaimDailyReward}
+                                        onShowComeBackModal={() => setShowComeBackModal(true)}
+                                    />
+                                )}
+                                
+                                {showComeBackModal && (
+                                    <ComeBackTomorrowModal onClose={() => setShowComeBackModal(false)} />
+                                )}
+                                
+                                {showSettingsModal && (
+                                    <SettingsModal
+                                        onClose={() => setShowSettingsModal(false)}
+                                        musicVolume={musicVolume}
+                                        onVolumeChange={setMusicVolume}
+                                    />
+                                )}
+                                
+                                {showOfflineModal && (
+                                    <OfflineEarningsModal
+                                        earnings={offlineEarnings}
+                                        onClaim={() => {
+                                            setBalance(b => b + offlineEarnings);
+                                            setTotalEarned(t => t + offlineEarnings);
+                                            setShowOfflineModal(false);
+                                            setOfflineEarnings(0);
+                                        }}
+                                    />
+                                )}
 
 
-                    <EnergyBar energy={energy} maxEnergy={maxEnergy} />
+                                <EnergyBar energy={energy} maxEnergy={maxEnergy} />
 
-                    <TabBar activeTab={activeTab} onTabClick={setActiveTab} />
-                
-                </div>
-            );
-        }
+                                <TabBar activeTab={activeTab} onTabClick={setActiveTab} />
+                            
+                            </div>
+                        );
+                    } // <-- Конец функции App
 
 
         // =================================================================

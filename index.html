@@ -944,22 +944,16 @@
             
             // --- КОНЕЦ НОВОЙ ЛОГИКИ ЗАГРУЗКИ ---
             
-            // --- НОВАЯ ЛОГИКА АСИНХРОННОГО СОХРАНЕНИЯ ---
+            // --- НОВАЯ ЛОГИКА АВТОСОХРАНЕНИЯ КАЖДЫЕ 5 СЕКУНД ---
                         
-                        // Используем Ref, чтобы хранить ссылку на debounced-функцию
-                        // (useRef - это "коробка" для хранения чего-либо, 
-                        // которая не меняется при перерисовках)
-                        const debouncedSaveRef = useRef(null);
-
-                        // Асинхронная функция сохранения
+                        // Асинхронная функция сохранения (остается такой же)
+                        // Она по-прежнему умеет сохранять и в TG, и в LS
                         const saveGameData = async (dataToSave) => {
                             console.log("Попытка сохранения данных...");
                             try {
                                 if (isTelegram) {
                                     // --- Сохранение в Telegram CloudStorage (Асинхронно) ---
-                                    // Опять оборачиваем в Promise, чтобы "ждать" (await)
                                     await new Promise((resolve, reject) => {
-                                        // Используем tg.CloudStorage.setItem
                                         tg.CloudStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave), (err, success) => {
                                             if (err) {
                                                 console.error("Ошибка сохранения в Telegram Cloud:", err);
@@ -973,7 +967,6 @@
                                     });
                                 } else {
                                     // --- Сохранение в LocalStorage (Синхронно) ---
-                                    // (Если мы не в Telegram, делаем как раньше)
                                     localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave));
                                     console.log("Успешно сохранено в LocalStorage (не в TG)");
                                 }
@@ -984,37 +977,59 @@
                                 }
                             }
                         };
-                        
-                        // Создаем "throttled" (дроссельную) функцию только один раз
-                                    if (!debouncedSaveRef.current) {
-                                        // Сохранять НЕ ЧАЩЕ, чем раз в 5 секунд (5000 мс)
-                                        debouncedSaveRef.current = throttle((data) => saveGameData(data), 5000);
-                                    }
 
-                        // Этот useEffect следит за изменениями и вызывает "отложенное" сохранение
-                        // (Он заменяет тот, что ты удалил)
+                        // 1. Создаем "коробку" (Ref) для хранения САМЫХ СВЕЖИХ данных
+                        // Это нужно, чтобы setInterval всегда имел доступ к актуальному
+                        // балансу, энергии и т.д.
+                        const latestDataRef = useRef();
+
+                        // 2. Этот useEffect ОБНОВЛЯЕТ "коробку" при КАЖДОМ изменении
+                        // (Он срабатывает мгновенно, но ничего не сохраняет)
                         useEffect(() => {
-                            // Сохраняем только если данные уже были загружены
-                            if (isDataLoaded) { 
-                                const dataToSave = {
-                                    balance,
-                                    energy, 
-                                    levels,
-                                    taskLevels,
-                                    dailyRewardsState,
-                                    totalTaps,
-                                    totalEarned,
-                                    musicVolume, 
-                                    lastOnlineTimestamp: Date.now() 
-                                };
+                            // Мы сохраняем свежие данные в "коробку",
+                            // чтобы setInterval мог их "взять" в любой момент.
+                            latestDataRef.current = {
+                                balance,
+                                energy,
+                                levels,
+                                taskLevels,
+                                dailyRewardsState,
+                                totalTaps,
+                                totalEarned,
+                                musicVolume,
+                                lastOnlineTimestamp: Date.now()
+                            };
+                        // Мы следим за всеми этими переменными
+                        }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, musicVolume]); 
+
+                        // 3. Этот useEffect запускает ТАЙМЕР, который срабатывает каждые 5 секунд
+                        useEffect(() => {
+                            // Убеждаемся, что начинаем сохранять только ПОСЛЕ первой загрузки
+                            if (isDataLoaded) {
                                 
-                                // ВАЖНО: Мы вызываем не 'saveGameData' напрямую,
-                                // а нашу "отложенную" версию из "коробки" (Ref)
-                                debouncedSaveRef.current(dataToSave);
+                                // Запускаем таймер
+                                const saveInterval = setInterval(() => {
+                                    
+                                    // Берем самые свежие данные из нашей "коробки"
+                                    const dataToSave = latestDataRef.current;
+                                    
+                                    // Проверяем, что данные есть (на всякий случай)
+                                    if (dataToSave) {
+                                        // И вызываем нашу асинхронную функцию сохранения
+                                        saveGameData(dataToSave);
+                                    }
+                                    
+                                }, 5000); // <-- Вот твои 5 секунд (5000 мс)
+
+                                // Обязательно останавливаем таймер, если компонент удаляется
+                                // (например, при закрытии игры)
+                                return () => clearInterval(saveInterval);
                             }
-                        }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, isDataLoaded, musicVolume]); // <-- Зависимости те же, что и раньше!
-                        
-                        // --- КОНЕЦ НОВОЙ ЛОГИКИ СОХРАНЕНИЯ ---
+                            
+                        // Этот useEffect сработает один раз, когда isDataLoaded stanet true
+                        }, [isDataLoaded]); 
+
+                        // --- КОНЕЦ НОВОЙ ЛОГИКИ АВТОСОХРАНЕНИЯ ---
 
 
             

@@ -842,9 +842,13 @@
                                     if (user.photo_url) {
                                         setPlayerPhotoUrl(user.photo_url);
                                         console.log("URL аватара загружен:", user.photo_url);
-                                }
-                            } catch (e) {
+                                    } // <-- Это твоя строка 323
+                                
+                                } // <-- ВОТ ЭТУ СКОБКУ НУЖНО ДОБАВИТЬ! (Она закрывает if(user))
+
+                            } catch (e) { // <-- Это твоя строка 324
                                 console.error("Ошибка загрузки имени пользователя:", e);
+
                                 // Оставляем дефолтное имя 'Player_Vasya'
                             }
                             // --- КОНЕЦ НОВОГО БЛОКА ---

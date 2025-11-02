@@ -766,6 +766,8 @@
             const [forceRerender, setForceRerender] = useState(0); 
 
             const [playerName, setPlayerName] = useState('Player_Vasya'); // Дефолтное имя
+
+            const [playerPhotoUrl, setPlayerPhotoUrl] = useState(null); // Дефолтный аватар
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -835,6 +837,11 @@
                                     // Кладем имя в нашу "память" (state)
                                     setPlayerName(name.trim());
                                     console.log("Имя пользователя загружено:", name.trim());
+
+                                    // --- ВОТ ЭТО ДОБАВЛЯЕМ ---
+                                    if (user.photo_url) {
+                                        setPlayerPhotoUrl(user.photo_url);
+                                        console.log("URL аватара загружен:", user.photo_url);
                                 }
                             } catch (e) {
                                 console.error("Ошибка загрузки имени пользователя:", e);
@@ -1679,6 +1686,7 @@
                                     balance={balance} 
                                     passiveRate={passiveRatePerSec} 
                                     playerName={playerName}
+                                    playerPhotoUrl={playerPhotoUrl}
                                 />
                                 
                                 <div className="game-screen">
@@ -2074,21 +2082,24 @@
             );
         }
 
-        function Header({ balance, passiveRate, playerName }) { 
+        function Header({ balance, passiveRate, playerName, playerPhotoUrl }) { 
              const rateDisplay = passiveRate > 0 ? ` (+${passiveRate}/сек)` : '';
              const formattedBalance = formatBalance(balance);
+             
+             // --- ДОБАВЛЯЕМ ЛОГИКУ ---
+             // Если playerPhotoUrl есть, используем его. 
+             // Если нет, используем старый placeholder (который у тебя 404, но ты можешь его потом добавить)
+             const avatarSrc = playerPhotoUrl ? playerPhotoUrl : "images/avatar_placeholder.png";
+             // -------------------------
 
             return (
                 <header className="header">
                     <div className="header-user">
-                        <img src="images/avatar_placeholder.png" alt="User" />
+                        {/* --- И МЕНЯЕМ SRC --- */}
+                        <img src={avatarSrc} alt="User" />
                         {playerName}
                     </div>
-                    <div className="header-balance">
-                        <img src="images/nut_icon.png" alt="NUT" />
-                        {formattedBalance}
-                        <span style={{fontSize: '0.6em', color: '#90EE90', fontWeight: 'bold'}}>{rateDisplay}</span>
-                    </div>
+...
                 </header>
             );
         }

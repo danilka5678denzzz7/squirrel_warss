@@ -2089,19 +2089,32 @@
              const rateDisplay = passiveRate > 0 ? ` (+${passiveRate}/сек)` : '';
              const formattedBalance = formatBalance(balance);
              
-             // --- ДОБАВЛЯЕМ ЛОГИКУ ---
              // Если playerPhotoUrl есть, используем его. 
-             // Если нет, используем старый placeholder (который у тебя 404, но ты можешь его потом добавить)
+             // Если нет, используем placeholder
              const avatarSrc = playerPhotoUrl ? playerPhotoUrl : "images/avatar_placeholder.png";
 
             return (
                 <header className="header">
                     <div className="header-user">
-                        {/* --- И МЕНЯЕМ SRC --- */}
                         <img src={avatarSrc} alt="User" />
                         {playerName}
                     </div>
-...
+                    
+                    {/* === ВОТ ЭТОТ БЛОК У ТЕБЯ ПРОПАЛ === */}
+                    <div className="header-balance">
+                        <img src="images/nut_icon.png" alt="Nut" />
+                        <div>
+                            <span>{formattedBalance}</span>
+                            {/* Показываем пассивный доход, если он есть */}
+                            {rateDisplay && (
+                                <span style={{fontSize: '0.6em', color: '#aaa', display: 'block', lineHeight: 1, marginTop: '2px'}}>
+                                    {rateDisplay}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    {/* === КОНЕЦ ПРОПАВШЕГО БЛОКА === */}
+
                 </header>
             );
         }

@@ -764,6 +764,8 @@
 
             // Состояние для принудительной перерисовки таймера каждую секунду
             const [forceRerender, setForceRerender] = useState(0); 
+
+            const [playerName, setPlayerName] = useState('Player_Vasya'); // Дефолтное имя
             
             
             // --- РАСЧЕТЫ БОНУСОВ ---
@@ -814,6 +816,33 @@
                     
                     try {
                         if (isTelegram) {
+
+                            // --- ВОТ ЭТО ДОБАВЛЯЕМ ---
+                            try {
+                                // Пытаемся получить данные юзера из Telegram
+                                const user = tg.initDataUnsafe.user;
+                                if (user) {
+                                    let name = user.first_name || '';
+                                    if (user.last_name) {
+                                        name += ' ' + user.last_name;
+                                    }
+                                    
+                                    // Если нет имени и фамилии, берем username
+                                    if (!name.trim()) {
+                                        name = user.username || 'Player_Vasya'; // Если нет и его, то дефолт
+                                    }
+                                    
+                                    // Кладем имя в нашу "память" (state)
+                                    setPlayerName(name.trim());
+                                    console.log("Имя пользователя загружено:", name.trim());
+                                }
+                            } catch (e) {
+                                console.error("Ошибка загрузки имени пользователя:", e);
+                                // Оставляем дефолтное имя 'Player_Vasya'
+                            }
+                            // --- КОНЕЦ НОВОГО БЛОКА ---
+
+
                             // --- Загрузка из Telegram CloudStorage ---
                             console.log("Загрузка из Telegram Cloud...");
                             
@@ -1649,6 +1678,7 @@
                                 <Header 
                                     balance={balance} 
                                     passiveRate={passiveRatePerSec} 
+                                    playerName={playerName}
                                 />
                                 
                                 <div className="game-screen">
@@ -2044,7 +2074,7 @@
             );
         }
 
-        function Header({ balance, passiveRate }) { 
+        function Header({ balance, passiveRate, playerName }) { 
              const rateDisplay = passiveRate > 0 ? ` (+${passiveRate}/сек)` : '';
              const formattedBalance = formatBalance(balance);
 
@@ -2052,7 +2082,7 @@
                 <header className="header">
                     <div className="header-user">
                         <img src="images/avatar_placeholder.png" alt="User" />
-                        Player_Vasya
+                        {playerName}
                     </div>
                     <div className="header-balance">
                         <img src="images/nut_icon.png" alt="NUT" />

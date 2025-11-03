@@ -1278,6 +1278,44 @@
                     audioMusicRef.current.pause();
                 }
             }, [musicVolume, musicStarted]);
+
+            // --- НОВАЯ ХЕЛПЕР-ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ/СУММИРОВАНИЯ БОНУСОВ ---
+            const addOrStackBonus = (newBonus) => {
+                // Убедимся, что у бонуса есть id, даже если он пришел без него
+                const bonusToApply = {
+                    ...newBonus,
+                    id: newBonus.id || Date.now()
+                };
+
+                setActiveBonuses(prev => {
+                    // 1. Ищем, активен ли уже бонус этого типа
+                    const existingBonusIndex = prev.findIndex(b => b.type === bonusToApply.type);
+                    
+                    if (existingBonusIndex !== -1) {
+                        // 2. ЕСЛИ АКТИВЕН: Суммируем время
+                        const existingBonus = prev[existingBonusIndex];
+                        
+                        // Берем текущее время истечения и добавляем к нему длительность НОВОГО бонуса
+                        const newExpiryTime = existingBonus.expiresAt + (bonusToApply.duration || 0) * 1000;
+                        
+                        // Создаем обновленный бонус с новым временем
+                        const updatedBonus = { ...existingBonus, expiresAt: newExpiryTime };
+                        
+                        // Возвращаем старый список, заменяя в нем бонус на обновленный
+                        return prev.map((b, index) => 
+                            index === existingBonusIndex ? updatedBonus : b
+                        );
+                    } else {
+                        // 3. ЕСЛИ НЕ АКТИВЕН: Просто добавляем новый
+                        // Рассчитываем время истечения для этого нового бонуса
+                        return [...prev, {
+                            ...bonusToApply,
+                            expiresAt: bonusToApply.expiresAt || (Date.now() + (bonusToApply.duration || 0) * 1000)
+                        }];
+                    }
+                });
+            };
+            // --- КОНЕЦ ХЕЛПЕР-ФУНКЦИИ ---
             
             
             // --- ОБНОВЛЕННАЯ ЛОГИКА handleGoldenNutClick ---
@@ -1310,33 +1348,9 @@
                          button: 'Забрать' 
                      });
                  } else {
-                     // --- КЛЮЧЕВАЯ НОВАЯ ЛОГИКА: Обновление существующего бонуса ---
-                     
-                     setActiveBonuses(prev => {
-                         // Ищем активный бонус того же типа
-                         const existingBonusIndex = prev.findIndex(b => b.type === chosenBonus.type);
-                         
-                         if (existingBonusIndex !== -1) {
-                             // Бонус того же типа уже активен: увеличиваем его время
-                             const existingBonus = prev[existingBonusIndex];
-                             
-                             // Новое время истечения: текущее время активного бонуса + длительность нового
-                             const newExpiryTime = existingBonus.expiresAt + chosenBonus.duration * 1000;
-                             
-                             const updatedBonus = { ...existingBonus, expiresAt: newExpiryTime };
-                             
-                             return prev.map((b, index) => 
-                                 index === existingBonusIndex ? updatedBonus : b
-                             );
-                         } else {
-                             // Бонус не активен: добавляем новый с временем истечения
-                             return [...prev, { 
-                                 ...chosenBonus, 
-                                 id: Date.now(),
-                                 expiresAt: Date.now() + chosenBonus.duration * 1000 
-                             }];
-                         }
-                     });
+                     // --- НОВАЯ ЛОГИКА С ХЕЛПЕРОМ ---
+                     // Просто передаем бонус в нашу "умную" функцию
+                     addOrStackBonus(chosenBonus);
                      
                      // Логика модального окна остается прежней
                      let message = '';
@@ -1548,21 +1562,20 @@
                         tap_chain: prev.tap_chain + 1
                     }));
                 } else if (task.type === 'balance') {
-                    // Бонусы теперь управляются expiresAt
+                    // Создаем объект бонуса из награды
                     const bonus = { 
-                        ...task.reward, 
-                        id: Date.now(), 
-                        expiresAt: Date.now() + task.reward.duration * 1000,
-                        type: 'double_income', // Добавляем type для корректной работы useEffect
-                        name: 'Двойной доход',
+                        ...task.reward, // Здесь уже есть type, name и duration
+                        id: Date.now()
                     };
                     
-                    setActiveBonuses(prev => [...prev, bonus]);
+                    // Вызываем "умную" функцию вместо прямого добавления
+                    addOrStackBonus(bonus); // <-- ИСПРАВЛЕНО
                     
                     setTaskLevels(prev => ({
                         ...prev,
                         balance_chain: prev.balance_chain + 1
                     }));
+
                 // (Строка ~856)
                 } else if (task.type === 'milestone') {
                     setTaskLevels(prev => ({
@@ -1598,30 +1611,15 @@
                     setBalance(b => b + reward.value);
                     setTotalEarned(t => t + reward.value);
                 } else if (reward.type === 'bonus') {
-                    // Бонусы теперь управляются expiresAt и имеют уникальный тип/название
+                    // Создаем объект бонуса из награды
                     const bonus = { 
-                        ...reward.bonus, 
-                        id: Date.now(),
-                        expiresAt: Date.now() + reward.bonus.duration * 1000 
+                        ...reward.bonus, // Здесь уже есть type, name и duration
+                        id: Date.now()
                     };
                     
-                    // Логика добавления/обновления бонуса из ежедневных наград
-                    setActiveBonuses(prev => {
-                        const existingBonusIndex = prev.findIndex(b => b.type === bonus.type);
-                        
-                        if (existingBonusIndex !== -1) {
-                            const existingBonus = prev[existingBonusIndex];
-                            const newExpiryTime = existingBonus.expiresAt + bonus.duration * 1000;
-                            const updatedBonus = { ...existingBonus, expiresAt: newExpiryTime };
-                            
-                            return prev.map((b, index) => 
-                                index === existingBonusIndex ? updatedBonus : b
-                            );
-                        } else {
-                            return [...prev, bonus];
-                        }
-                    });
-                }
+                    // Вызываем "умную" функцию
+                    addOrStackBonus(bonus); // <-- ИСПРАВЛЕНО
+                }    
 
                 setDailyRewardsState({
                     currentDay: (dailyRewardsState.currentDay + 1) % 7, 

@@ -355,6 +355,7 @@
             color: #eee; 
             font-weight: 500;
             line-height: 1.3;
+            word-break: break-all;
         }
         .upgrade-info .description-line-next {
             color: #4CAF50; 
@@ -481,7 +482,7 @@
         .task-title-row { display: flex; align-items: center; gap: 8px; }
         .task-info-btn { background: #555; color: white; border: 1px solid #777; border-radius: 50%; width: 20px; height: 20px; font-size: 0.8em; font-weight: bold; padding: 0; cursor: pointer; line-height: 18px; flex-shrink: 0; }
         .task-info strong { font-size: 1.1em; }
-        .task-info .progress-text { font-size: 0.9em; color: #aaa; }
+        .task-info .progress-text { font-size: 0.9em; color: #aaa;word-break:break-all; }
         .progress-bar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; margin-top: 5px; overflow: hidden; }
         .progress-bar-inner { height: 100%; background: #4CAF50; border-radius: 4px; transition: width 0.3s; }
         .daily-rewards-modal { background: #282828; padding: 20px; border-radius: 15px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
@@ -2568,7 +2569,7 @@
             if (task.type === 'milestone') rewardText = getMilestoneRewardText(task.reward);
 
             return (
-                
+
                 <div className={`task-item ${isComplete ? 'is-claimable' : ''}`}>
                     <div className="icon">{task.icon}</div>
                     <div className="task-info">

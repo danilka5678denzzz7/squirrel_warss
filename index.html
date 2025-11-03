@@ -644,9 +644,25 @@
                 { id: 'gn_8', name: 'Хранитель казны', type: 'golden_nut', target: 60, reward: 120000, icon: '🌟', details: 'Поймайте 60 Золотых Орехов.' },
                 { id: 'gn_9', name: 'Магнат Орехов', type: 'golden_nut', target: 85, reward: 250000, icon: '🌟', details: 'Поймайте 85 Золотых Орехов.' },
                 { id: 'gn_10', name: 'Золотой Король', type: 'golden_nut', target: 100, reward: 500000, icon: '🌟', details: 'Поймайте 100 Золотых Орехов.' }
-            ]
-            // --- КОНЕЦ НОВОЙ ЦЕПОЧКИ ---
-        };
+        ]
+        // --- КОНЕЦ НОВОЙ ЦЕПОЧКИ ---
+        , // <-- ВАЖНО: Поставь здесь запятую
+
+        // --- НОВАЯ ЦЕПОЧКА: ТРАНЖИРА ---
+        'spend_chain': [
+            { id: 'sp_1', name: 'Пробный расход', type: 'spend', target: 100000, reward: 5000, icon: '💎', details: 'Потратьте 100 000 $NUT на любые улучшения (во вкладке "Бусты") и получите кэшбэк 5%.' },
+            { id: 'sp_2', name: 'Мелкий инвестор', type: 'spend', target: 500000, reward: 25000, icon: '💎', details: 'Потратьте 500 000 $NUT на улучшения.' },
+            { id: 'sp_3', name: 'Начинающий капиталист', type: 'spend', target: 2500000, reward: 125000, icon: '💎', details: 'Потратьте 2 500 000 $NUT на улучшения.' },
+            { id: 'sp_4', name: 'Серьёзные вложения', type: 'spend', target: 10000000, reward: 500000, icon: '💎', details: 'Потратьте 10 000 000 $NUT на улучшения.' },
+            { id: 'sp_5', name: 'Вкус денег', type: 'spend', target: 50000000, reward: 2500000, icon: '💎', details: 'Потратьте 50 000 000 $NUT на улучшения.' },
+            { id: 'sp_6', name: 'Полный оборот', type: 'spend', target: 200000000, reward: 10000000, icon: '💎', details: 'Потратьте 200 000 000 $NUT на улучшения.' },
+            { id: 'sp_7', name: 'Миллиардер', type: 'spend', target: 1000000000, reward: 50000000, icon: '💎', details: 'Потратьте 1 000 000 000 $NUT на улучшения.' },
+            { id: 'sp_8', name: 'Ореховый магнат', type: 'spend', target: 5000000000, reward: 250000000, icon: '💎', details: 'Потратьте 5 000 000 000 $NUT на улучшения.' },
+            { id: 'sp_9', name: 'Владыка средств', type: 'spend', target: 25000000000, reward: 1250000000, icon: '💎', details: 'Потратьте 25 000 000 000 $NUT на улучшения.' },
+            { id: 'sp_10', name: 'Экономический гений', type: 'spend', target: 100000000000, reward: 5000000000, icon: '💎', details: 'Потратьте 100 000 000 000 $NUT на улучшения.' }
+        ]
+        // --- КОНЕЦ НОВОЙ ЦЕПОЧКИ ---
+    };
         
         const INITIAL_RAID_LOG = [
              { id: 1, type: 'win', amount: 0, target: 'Белка_Вася' },
@@ -717,8 +733,8 @@
             baseHp: 2,
             vault: 1
         };
-        // (Строка 302)
-        const defaultTaskLevels = { tap_chain: 0, balance_chain: 0, total_earned_chain: 0, golden_nut_chain: 0 };
+        
+        const defaultTaskLevels = { tap_chain: 0, balance_chain: 0, total_earned_chain: 0, golden_nut_chain: 0, spend_chain: 0 };
         const defaultDailyRewardsState = { currentDay: 0, lastClaimedTimestamp: null };
 
         // --- Инициализация Telegram WebApp ---
@@ -753,6 +769,7 @@
             const [totalTaps, setTotalTaps] = useState(0); 
             const [totalEarned, setTotalEarned] = useState(0);
             const [totalGoldenNutsCaught, setTotalGoldenNutsCaught] = useState(0); // <-- Счетчик Орехов
+            const [totalSpent, setTotalSpent] = useState(0);
             const [taskLevels, setTaskLevels] = useState(defaultTaskLevels); 
             const [showTasksModal, setShowTasksModal] = useState(false);
             const [showTaskClaimModal, setShowTaskClaimModal] = useState(null);
@@ -820,13 +837,15 @@
             const currentBalanceTask = TASK_CATALOG.balance_chain[taskLevels.balance_chain];
             const currentEarnedTask = TASK_CATALOG.total_earned_chain[taskLevels.total_earned_chain];
             const currentGoldenNutTask = TASK_CATALOG.golden_nut_chain[taskLevels.golden_nut_chain];
+            const currentSpendTask = TASK_CATALOG.spend_chain[taskLevels.spend_chain];
             
             const completedTapTasks = (currentTapTask && totalTaps >= currentTapTask.target) ? 1 : 0;
             const completedBalanceTasks = (currentBalanceTask && balance >= currentBalanceTask.target) ? 1 : 0;
             const completedMilestoneTasks = (currentEarnedTask && totalEarned >= currentEarnedTask.target) ? 1 : 0;
             const completedGoldenNutTasks = (currentGoldenNutTask && totalGoldenNutsCaught >= currentGoldenNutTask.target) ? 1 : 0;
+            const completedSpendTasks = (currentSpendTask && totalSpent >= currentSpendTask.target) ? 1 : 0;
             
-            const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks + completedGoldenNutTasks;
+            const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks + completedGoldenNutTasks + completedSpendTasks;
             
             
             // --- НОВАЯ ЛОГИКА АСИНХРОННОЙ ЗАГРУЗКИ ---
@@ -963,6 +982,7 @@
                         setTotalTaps(savedData.totalTaps || 0);
                         setTotalEarned(savedData.totalEarned || 0);
                         setTotalGoldenNutsCaught(savedData.totalGoldenNutsCaught || 0);
+                        setTotalSpent(savedData.totalSpent || 0);
                         setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
                         if (savedData.levels.autoBot > 0) {
@@ -1059,6 +1079,7 @@
                                 totalTaps,
                                 totalEarned,
                                 totalGoldenNutsCaught,
+                                totalSpent,
                                 musicVolume,
                                 lastOnlineTimestamp: Date.now()
                             };
@@ -1450,6 +1471,7 @@
                 
                 if (balance >= cost) {
                     setBalance(balance - cost);
+                    setTotalSpent(s => s + cost);
                     setLevels(prevLevels => ({
                         ...prevLevels,
                         [upgradeId]: upgrade.type === 'once' ? 1 : prevLevels[upgradeId] + 1
@@ -1507,6 +1529,12 @@
                         setShowTaskClaimModal(task);
                         setShowTasksModal(false); 
                     }
+                } else if (taskChainId === 'spend_chain') { // <-- ДОБАВЬ ЭТОТ БЛОК
+                    task = TASK_CATALOG.spend_chain[taskLevels.spend_chain];
+                    if (task && totalSpent >= task.target) {
+                        setShowTaskClaimModal(task);
+                        setShowTasksModal(false); 
+                    }
                 }
             }; // <-- Конец функции
             
@@ -1540,12 +1568,19 @@
                         ...prev,
                         total_earned_chain: prev.total_earned_chain + 1
                     }));
-                } else if (task.type === 'golden_nut') { // <-- ДОБАВЬ ЭТОТ БЛОК
+                } else if (task.type === 'golden_nut') { 
                     setBalance(b => b + task.reward);
                     setTotalEarned(t => t + task.reward);
                     setTaskLevels(prev => ({
                         ...prev,
                         golden_nut_chain: prev.golden_nut_chain + 1
+                    }));
+                } else if (task.type === 'spend') { // <-- ДОБАВЬ ЭТОТ БЛОК
+                    setBalance(b => b + task.reward);
+                    setTotalEarned(t => t + task.reward); // Кэшбэк - это тоже "заработок"
+                    setTaskLevels(prev => ({
+                        ...prev,
+                        spend_chain: prev.spend_chain + 1
                     }));
                 }
 
@@ -1760,12 +1795,14 @@
                                         balance={balance} 
                                         totalEarned={totalEarned} 
                                         totalGoldenNutsCaught={totalGoldenNutsCaught}
+                                        totalSpent={totalSpent}
                                         taskLevels={taskLevels}
                                         onClaim={handleClaimTask}
                                         completedTapTasks={completedTapTasks}
                                         completedBalanceTasks={completedBalanceTasks}
                                         completedMilestoneTasks={completedMilestoneTasks}
                                         completedGoldenNutTasks={completedGoldenNutTasks}
+                                        completedSpendTasks={completedSpendTasks}
                                     />
                                 )}
                                 
@@ -1992,10 +2029,11 @@
             let icon = task.icon;
             let buttonText = 'Забрать!';
 
-            if (task.type === 'tap' || task.type === 'golden_nut') {
+            if (task.type === 'tap' || task.type === 'golden_nut' || task.type === 'spend') {
                 rewardMessage = `Вы получаете +${formatBalance(task.reward)} $NUT!`;
                 icon = '💰';
             } else if (task.type === 'balance') {
+    
                 rewardMessage = `Вы активируете бонус "${task.reward.name}" на ${task.reward.duration} секунд!`;
                 icon = '⚡';
                 buttonText = 'Активировать!';
@@ -2354,8 +2392,8 @@
         
         // (Строка ~1338)
         function TasksModal({ 
-            onClose, totalTaps, balance, totalEarned, totalGoldenNutsCaught, taskLevels, onClaim, 
-            completedTapTasks, completedBalanceTasks, completedMilestoneTasks, completedGoldenNutTasks 
+            onClose, totalTaps, balance, totalEarned, totalGoldenNutsCaught, totalSpent, taskLevels, onClaim, 
+            completedTapTasks, completedBalanceTasks, completedMilestoneTasks, completedGoldenNutTasks, completedSpendTasks
         }) {
             
             const [activeTaskTab, setActiveTaskTab] = useState('tap');
@@ -2373,12 +2411,15 @@
 
             const goldenNutTaskLevel = taskLevels.golden_nut_chain; 
             const goldenNutTask = TASK_CATALOG.golden_nut_chain[goldenNutTaskLevel]; 
+            const spendTaskLevel = taskLevels.spend_chain;
+            const spendTask = TASK_CATALOG.spend_chain[spendTaskLevel];
             
             const infoTask = infoTaskId 
                 ? (TASK_CATALOG.tap_chain.find(t => t.id === infoTaskId) || 
                    TASK_CATALOG.balance_chain.find(t => t.id === infoTaskId) ||
                    TASK_CATALOG.total_earned_chain.find(t => t.id === infoTaskId) ||
-                   TASK_CATALOG.golden_nut_chain.find(t => t.id === infoTaskId)) 
+                   TASK_CATALOG.golden_nut_chain.find(t => t.id === infoTaskId) ||
+                   TASK_CATALOG.spend_chain.find(t => t.id === infoTaskId)) 
                 : null;
                 
             const renderTabContent = () => {
@@ -2406,9 +2447,23 @@
                                     />
                                 ) : (
                                     <p>Все задания "Охотник за Золотом" выполнены!</p>
-                                )}
-                            </>
-                        );
+                                                )}
+
+                                                {/* --- ВОТ НОВЫЙ БЛОК ДЛЯ ТРАНЖИРЫ --- */}
+                                                {spendTask ? (
+                                                    <TaskItem 
+                                                        task={spendTask} 
+                                                        currentProgress={totalSpent} 
+                                                        onClaim={() => onClaim('spend_chain')} 
+                                                        onShowInfo={() => setInfoTaskId(spendTask.id)} 
+                                                    />
+                                                ) : (
+                                                    <p>Все задания "Транжира" выполнены!</p>
+                                                )}
+                                                {/* --- КОНЕЦ НОВОГО БЛОКА --- */}
+
+                                            </>
+                                        );
                     case 'balance':
                          return balanceTask ? (
                             <TaskItem 
@@ -2461,9 +2516,9 @@
                                        onClick={() => setActiveTaskTab('tap')}
                                    >
                                        Начало
-                                       {(completedTapTasks + completedGoldenNutTasks) > 0 && ( // <-- ИЗМЕНИЛИ
+                                       {(completedTapTasks + completedGoldenNutTasks + completedSpendTasks) > 0 && (
                                            <span className="task-tab-badge">
-                                               {completedTapTasks + completedGoldenNutTasks} {/* <-- ИЗМЕНИЛИ */}
+                                               {completedTapTasks + completedGoldenNutTasks + completedSpendTasks}
                                            </span>
                                        )}
                                    </div>
@@ -2502,11 +2557,18 @@
             const progressPercent = Math.min(100, (currentProgress / task.target) * 100);
             
             let rewardText = '...';
-            if (task.type === 'tap' || task.type === 'golden_nut') rewardText = `+${formatBalance(task.reward)} $NUT`;
+
+            // --- ДОБАВЬ ЭТОТ БЛОК ---
+            if (task.type === 'tap' || task.type === 'golden_nut' || task.type === 'spend') {
+                rewardText = `+${formatBalance(task.reward)} $NUT`;
+            }
+            // --- КОНЕЦ БЛОКА ---
+                        
             if (task.type === 'balance') rewardText = 'x2';
             if (task.type === 'milestone') rewardText = getMilestoneRewardText(task.reward);
 
             return (
+                
                 <div className={`task-item ${isComplete ? 'is-claimable' : ''}`}>
                     <div className="icon">{task.icon}</div>
                     <div className="task-info">

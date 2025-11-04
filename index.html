@@ -1039,7 +1039,7 @@
                             try {
                                 if (isTelegram) {
                                     // --- Сохранение в Telegram CloudStorage (Асинхронно) ---
-                                    await new Promise((resolve, reject) => {
+                                    new Promise((resolve, reject) => {
                                         tg.CloudStorage.setItem(SAVE_DATA_KEY, JSON.stringify(dataToSave), (err, success) => {
                                             if (err) {
                                                 console.error("Ошибка сохранения в Telegram Cloud:", err);

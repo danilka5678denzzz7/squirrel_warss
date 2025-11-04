@@ -789,8 +789,6 @@
             const [isDataLoaded, setIsDataLoaded] = useState(false);
 
             const [isSquirrelActive, setIsSquirrelActive] = useState(false);
-
-            const squirrelTimerRef = useRef(null);
             
             const [musicVolume, setMusicVolume] = useState(50); 
             const [musicStarted, setMusicStarted] = useState(false);
@@ -1468,25 +1466,14 @@
                         setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
                     }, 1000);
                     
-                    // --- ОБНОВЛЕННАЯ ЛОГИКА АКТИВАЦИИ АНИМАЦИИ (Устранение прерывания) ---
-                    
-                    // 1. Очищаем предыдущий таймер, если он был
-                    if (squirrelTimerRef.current) {
-                        clearTimeout(squirrelTimerRef.current);
-                    }
-                    
-                    // 2. Устанавливаем белку в активное состояние
+                    // --- НОВАЯ ЛОГИКА АКТИВАЦИИ АНИМАЦИИ ---
                     setIsSquirrelActive(true); 
-                    
-                    // 3. Запускаем НОВЫЙ таймер и сохраняем его ID
-                    const newTimerId = setTimeout(() => {
+                    setTimeout(() => {
                         setIsSquirrelActive(false);
                     }, 150);
-                    
-                    squirrelTimerRef.current = newTimerId;
-                    // --- КОНЕЦ ОБНОВЛЕННОЙ ЛОГИКИ ---
                 }
             };
+
             // 1. Для кликов мышью (на десктопе)
             const handleTap = (e) => {
                 // Игнорируем нажатия на золотой орех, если он активен

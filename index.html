@@ -257,7 +257,8 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
-        .forest-screen .squirrel-btn:active {
+        /* ЗАМЕНА: Теперь анимация управляется классом .is-active из JS */
+        .forest-screen .squirrel-btn.is-active {
             animation: clickShake 0.15s ease-out; 
             transform: scale(0.98); 
         }
@@ -786,6 +787,8 @@
             const [showSettingsModal, setShowSettingsModal] = useState(false);
             
             const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+            const [isSquirrelActive, setIsSquirrelActive] = useState(false);
             
             const [musicVolume, setMusicVolume] = useState(50); 
             const [musicStarted, setMusicStarted] = useState(false);
@@ -1428,6 +1431,12 @@
                     setTimeout(() => {
                         setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
                     }, 1000);
+                    
+                    // --- НОВАЯ ЛОГИКА АКТИВАЦИИ АНИМАЦИИ ---
+                    setIsSquirrelActive(true); 
+                    setTimeout(() => {
+                        setIsSquirrelActive(false);
+                    }, 150);
                 }
             };
 
@@ -1663,6 +1672,7 @@
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
                                     isDailyRewardAvailable={isDailyRewardAvailable}
                                     onSettingsClick={() => setShowSettingsModal(true)}
+                                    isSquirrelActive={isSquirrelActive} 
                                 />
                                 
                                 {activeBonuses.length > 0 && (
@@ -2245,7 +2255,10 @@
 
         // --- Экраны ---
         
-        function ForestScreen({ onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick }) {
+        function ForestScreen({ 
+            onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick,
+            isSquirrelActive // <-- ИЗМЕНЕНО: Добавляем пропс
+        }) {
             
             // ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТСУТСТВИЯ ИЗОБРАЖЕНИЯ (FOLBACK)
             const handleImageError = (e, fallbackEmoji) => {
@@ -2260,7 +2273,7 @@
 
             return (
                 <div className="forest-screen">
-                    <button className="squirrel-btn">
+                    <button className={`squirrel-btn ${isSquirrelActive ? 'is-active' : ''}`}>
                         <img src="images/squirrel_main_anim.png" alt="Tap me!" />
                     </button>
                     

@@ -1064,6 +1064,43 @@
                             }
                         };
 
+                        // --- НОВАЯ ЛОГИКА: Принудительное сохранение при закрытии/сворачивании (ФИКС БАГА) ---
+                                    useEffect(() => {
+                                        // Убеждаемся, что мы в Telegram (isTelegram) и данные уже загружены
+                                        if (!isDataLoaded || !isTelegram) return;
+                                    
+                                        // Функция, которая будет вызвана перед закрытием/сворачиванием
+                                        const saveBeforeClose = () => {
+                                            const dataToSave = latestDataRef.current;
+                                            if (dataToSave) {
+                                                console.log("Saving data on close/unload event...");
+                                                
+                                                // Вызываем АСИНХРОННУЮ функцию сохранения. 
+                                                // Мы не можем использовать await в этих обработчиках, 
+                                                // но это запускает процесс сохранения в Telegram Cloud Storage.
+                                                saveGameData(dataToSave); 
+                                            }
+                                        };
+                                        
+                                        // 1. Обработчик: При закрытии вкладки/окна (window.onbeforeunload)
+                                        window.addEventListener('beforeunload', saveBeforeClose);
+                                        
+                                        // 2. Обработчик: При сворачивании или переключении вкладок (document.visibilitychange)
+                                        // Это наиболее надежный способ принудительного сохранения в Web App.
+                                        document.addEventListener('visibilitychange', () => {
+                                            if (document.visibilityState === 'hidden') {
+                                                saveBeforeClose();
+                                            }
+                                        });
+                                    
+                                        // Очистка: Важно удалить обработчики при удалении компонента
+                                        return () => {
+                                            window.removeEventListener('beforeunload', saveBeforeClose);
+                                            document.removeEventListener('visibilitychange', saveBeforeClose);
+                                        };
+                                    }, [isDataLoaded, isTelegram]); 
+                                    // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
+
                         // 1. Создаем "коробку" (Ref) для хранения САМЫХ СВЕЖИХ данных
                         // Это нужно, чтобы setInterval всегда имел доступ к актуальному
                         // балансу, энергии и т.д.

@@ -20,23 +20,15 @@
             background-color: #1a1a1a;
             color: white;
             overflow: hidden; 
+            /* НОВОЕ: Запрет нежелательной прокрутки на мобильных */
+            overscroll-behavior-y: none; 
         }
-
-        /* === СТИЛИ ЛОАДЕРА === */
-        #loader {
-            position: fixed;
-            /* ... и остальные стили из моего прошлого ответа ... */
-        }
-        .loader-spinner {
-            /* ... стили ... */
-        }
-        @keyframes spin {
-            /* ... стили ... */
-        }
-        /* === КОНЕЦ СТИЛЕЙ ЛОАДЕРА === */
 
         #root {
             height: 100vh;
+            /* НОВОЕ: Fix для корректной высоты на iOS/мобильных */
+            min-height: -webkit-fill-available; 
+            min-height: 100dvh; 
         }
 
         /* Контейнер всей игры */
@@ -44,7 +36,9 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            max-width: 500px; 
+            min-height: -webkit-fill-available; 
+            min-height: 100dvh;
+            width: 100%;
             margin: 0 auto;
             background-color: #222;
             background-image: url('images/bg_forest_main.png');
@@ -103,6 +97,30 @@
             flex-shrink: 0; 
         }
 
+        /* --- АДАПТАЦИЯ ХЕДЕРА И ЕГО ЭЛЕМЕНТОВ --- */
+        .header {
+            padding: 8px 10px; /* Уменьшаем горизонтальный padding */
+        }
+        .header-user {
+            font-size: 1em; /* Чуть уменьшаем шрифт */
+            padding: 6px 14px;
+            gap: 6px;
+        }
+        .header-user img {
+            width: 35px; 
+            height: 35px;
+        }
+        .header-balance {
+            font-size: 1.2em; /* Чуть уменьшаем шрифт */
+            padding: 6px 14px;
+            gap: 6px;
+        }
+        .header-balance img {
+            width: 35px; 
+            height: 35px;
+        }
+        /* --- КОНЕЦ АДАПТАЦИИ ХЕДЕРА --- */
+
         /* 2. Игровой экран (меняется) */
         .game-screen {
             flex-grow: 1;
@@ -130,8 +148,8 @@
 
         .golden-nut-container {
             position: absolute;
-            width: 75px; 
-            height: 75px;
+            width: 60px; 
+            height: 60px;
             cursor: pointer;
             z-index: 50;
             filter: drop-shadow(0 0 8px gold);
@@ -321,19 +339,22 @@
             flex-direction: column;
             gap: 10px;
             padding-bottom: 50px;
+            padding-top: 10px; /* НОВОЕ: Отступ сверху */
+            padding-left: 10px; /* НОВОЕ: Отступ слева */
+            padding-right: 10px; /* НОВОЕ: Отступ справа */
         }
         .upgrade-item {
             display: flex;
             align-items: center;
             background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
+            padding: 8px; /* УМЕНЬШЕНО с 10px */
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .upgrade-item img {
-            width: 48px;
-            height: 48px;
-            margin-right: 15px;
+            width: 40px; /* УМЕНЬШЕНО с 48px */
+            height: 40px; /* УМЕНЬШЕНО с 48px */
+            margin-right: 10px; /* УМЕНЬШЕНО с 15px */
             background: #444; 
             border-radius: 8px;
         }
@@ -343,16 +364,17 @@
             text-align: left;
         }
         .upgrade-info strong {
-            margin-bottom: 4px; 
+            margin-bottom: 2px; /* УМЕНЬШЕНО с 4px */
             display: inline-block;
+            font-size: 0.95em; /* НОВОЕ: Чуть меньше шрифт */
         }
         .upgrade-info .level-text {
-            font-size: 0.9em;
+            font-size: 0.85em; /* УМЕНЬШЕНО с 0.9em */
             color: #aaa; 
-            margin-bottom: 4px; 
+            margin-bottom: 2px; /* УМЕНЬШЕНО с 4px */
         }
         .upgrade-info .description-line {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #eee; 
             font-weight: 500;
             line-height: 1.3;
@@ -367,12 +389,14 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 8px 10px; /* УМЕНЬШЕНО с 10px 15px */
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             flex-shrink: 0;
             transition: background-color 0.3s;
+            font-size: 0.9em; /* НОВОЕ: Чуть меньше шрифт */
+            line-height: 1.1;
         }
         .buy-btn:disabled {
             background-color: #555;
@@ -401,19 +425,19 @@
         .energy-bar-label { display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 5px; }
         .energy-bar-fill { width: 100%; height: 10px; background-color: rgba(255, 255, 255, 0.2); border-radius: 5px; overflow: hidden; }
         .energy-bar-inner { height: 100%; background: linear-gradient(90deg, #64DD17, #33B760); border-radius: 5px; transition: width 0.5s ease; }
-        .tab-bar { display: flex; justify-content: space-around; background: rgba(0, 0, 0, 0.9); border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; padding: 0 0 5px 0; }
-        .tab-item { flex-grow: 1; padding: 5px 0 5px 0; text-align: center; cursor: pointer; color: #eee; border-top: 3px solid transparent; transition: color 0.2s, border-color 0.2s, transform 0.1s; font-size: 1em; font-weight: 500; }
+        .tab-bar { display: flex; justify-content: space-around; background: rgba(0, 0, 0, 0.9); border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; padding: 0 0 0 0; /* УБРАН нижний padding */ }
+        .tab-item { flex-grow: 1; padding: 5px 2px 5px 2px; /* НОВОЕ: Более компактный padding */ text-align: center; cursor: pointer; color: #eee; border-top: 3px solid transparent; transition: color 0.2s, border-color 0.2s, transform 0.1s; font-size: 0.9em; /* УМЕНЬШЕНО */ font-weight: 500; }
         .tab-item:active { transform: scale(0.98); }
-        .tab-item img { width: 32px; height: 32px; opacity: 0.9; margin-bottom: 2px; display: block; margin: 0 auto 2px auto; }
+        .tab-item img { width: 28px; /* УМЕНЬШЕНО с 32px */ height: 28px; /* УМЕНЬШЕНО с 32px */ opacity: 0.9; margin-bottom: 2px; display: block; margin: 0 auto 2px auto; }
         .tab-item.active { color: #eee; border-top-color: #FFD700; }
         .tab-item.active img { opacity: 1; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .app-modal { background: #282828; padding: 30px; border-radius: 15px; max-width: 300px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; }
-        .app-modal h3 { font-size: 1.5em; margin-top: 0; margin-bottom: 15px; font-weight: bold; }
+        .app-modal { background: #282828; padding: 20px; /* УМЕНЬШЕНО с 30px */ border-radius: 15px; max-width: 95%; /* УВЕЛИЧЕНО с 300px/90% */ width: auto; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; }
+        .app-modal h3 { font-size: 1.3em; /* УМЕНЬШЕНО с 1.5em */ margin-top: 0; margin-bottom: 15px; font-weight: bold; }
         .app-modal h3.success { color: #4CAF50; }
         .app-modal h3.max-level { color: #FFD700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.8); }
         .app-modal h3.ended { color: #FF7043; }
-        .app-modal p { color: white; font-size: 1.1em; margin-bottom: 20px; line-height: 1.4; }
+        .app-modal p { color: white; font-size: 1em; /* УМЕНЬШЕНО с 1.1em */ margin-bottom: 20px; line-height: 1.4; }
         .app-modal .icon { font-size: 3em; margin-bottom: 15px; display: inline-block; }
         .app-modal .bot-icon { animation: pulse 1.5s infinite alternate; }
         .app-modal .level-icon { color: gold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
@@ -425,22 +449,8 @@
         /* СТИЛИ ДЛЯ КНОПОК НА ОСНОВЕ ИЗОБРАЖЕНИЯ (Task, Daily) */
         .tasks-button, .daily-rewards-button { 
             position: absolute; 
-            width: 65px; /* Размер 65px */
-            height: 65px; /* Размер 65px */
-            background: none; border: none; border-radius: 0; 
-            display: flex; 
-            justify-content: center; align-items: center; 
-            cursor: pointer; z-index: 40; 
-            padding: 0; 
-            color: transparent; 
-            text-shadow: none; 
-        }
-        
-        /* СТИЛЬ ТОЛЬКО ДЛЯ КНОПКИ НАСТРОЕК (Уменьшенный размер) */
-        .settings-button { 
-            position: absolute; 
-            width: 55px; /* УМЕНЬШЕНО для Settings */
-            height: 55px; /* УМЕНЬШЕНО для Settings */
+            width: 55px; /* УМЕНЬШЕНО с 65px */
+            height: 55px; /* УМЕНЬШЕНО с 65px */
             background: none; border: none; border-radius: 0; 
             display: flex; 
             justify-content: center; align-items: center; 
@@ -450,9 +460,24 @@
             text-shadow: none; 
         }
 
-        .tasks-button { top: 20px; right: 20px; }
-        .daily-rewards-button { top: 95px; right: 20px; }
-        .settings-button { top: 20px; left: 20px; right: auto; }
+        /* СТИЛЬ ТОЛЬКО ДЛЯ КНОПКИ НАСТРОЕК (Уменьшенный размер) */
+        .settings-button { 
+            position: absolute; 
+            width: 45px; /* УМЕНЬШЕНО с 55px */
+            height: 45px; /* УМЕНЬШЕНО с 55px */
+            background: none; border: none; border-radius: 0; 
+            display: flex; 
+            justify-content: center; align-items: center; 
+            cursor: pointer; z-index: 40; 
+            padding: 0; 
+            color: transparent; 
+            text-shadow: none; 
+        }
+
+        /* НОВЫЕ ПОЗИЦИИ (ближе к краю) */
+        .tasks-button { top: 15px; right: 15px; } 
+        .daily-rewards-button { top: 75px; right: 15px; } /* Сдвинуто ближе */
+        .settings-button { top: 15px; left: 15px; right: auto; }
 
         .tasks-button img, .daily-rewards-button img, .settings-button img {
             width: 100%;
@@ -467,14 +492,31 @@
          
         .notification-badge { position: absolute; top: 0px; right: 0px; background: red; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.6em; font-weight: bold; }
         .daily-rewards-button .notification-badge { top: 5px; right: 5px; }
-        .tasks-modal { background: #282828; padding: 15px 20px 20px 20px; border-radius: 15px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; max-height: 70vh; }
+        .tasks-modal { background: #282828; padding: 15px; /* УМЕНЬШЕНО */ border-radius: 15px; max-width: 95%; /* УВЕЛИЧЕНО */ width: auto; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; max-height: 90vh; display: flex; flex-direction: column; }
         .tasks-modal h2 { color: gold; margin-top: 0; display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 15px; }
+        /* Контейнер для прокрутки заданий/наград внутри модальных окон */
+        .task-list-content, .daily-rewards-content {
+            flex-grow: 1; /* Позволяет контейнеру занимать все доступное место */
+            overflow-y: auto; /* Включает прокрутку только внутри этого блока */
+            padding-top: 10px; /* Небольшой отступ сверху */
+        }
+        /* Стиль для прокручиваемой области наград */
+        .daily-rewards-content {
+            flex-grow: 1; /* Позволяет блоку заполнить всю высоту */
+            overflow-y: auto; /* Включает прокрутку, если контент не помещается */
+            padding: 10px 0; /* Отступы для прокручиваемой области */
+            /* Устанавливаем минимальную высоту, чтобы гарантировать видимость */
+            min-height: 150px; 
+            
+            /* Убедитесь, что ваш .task-list-content и .daily-rewards-content */
+            /* имеют одинаковые стили для прокрутки, если они были ранее разделены */
+        }
         .task-tab-bar { display: flex; justify-content: space-around; border-bottom: 1px solid #555; margin-bottom: 15px; }
         .task-tab { flex-grow: 1; padding: 10px 5px; cursor: pointer; color: #aaa; font-weight: 500; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; position: relative; }
         .task-tab:hover { color: #eee; }
         .task-tab.active { color: gold; border-bottom-color: gold; }
         .task-tab-badge { position: absolute; top: 5px; right: 5px; background: red; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.7em; font-weight: bold; line-height: 18px; }
-        .task-list-content { max-height: calc(70vh - 150px); overflow-y: auto; &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; } &::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); } }
+        .task-list-content { max-height: calc(90vh - 200px); overflow-y: auto; &::-webkit-scrollbar { width: 6px; } &::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; } &::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); } }
         .task-item { display: flex; align-items: center; background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); transition: background 0.3s, border-color 0.3s; }
         .task-item.is-claimable { background: rgba(76, 175, 80, 0.15); border-color: #4CAF50; }
         .task-item.is-claimable .buy-btn { background-color: #4CAF50; animation: pulse-green 1.5s infinite; }
@@ -486,7 +528,16 @@
         .task-info .progress-text { font-size: 0.9em; color: #aaa;word-break:break-all; }
         .progress-bar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; margin-top: 5px; overflow: hidden; }
         .progress-bar-inner { height: 100%; background: #4CAF50; border-radius: 4px; transition: width 0.3s; }
-        .daily-rewards-modal { background: #282828; padding: 20px; border-radius: 15px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; animation: fadeIn 0.3s ease-out; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        .daily-rewards-modal { 
+            background: #282828; padding: 15px; border-radius: 15px; max-width: 95%; width: auto; 
+            text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); border: 2px solid gold; 
+            animation: fadeIn 0.3s ease-out; box-sizing: border-box; 
+            /* --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Задаем структуру для компоновки --- */
+            max-height: 90vh; 
+            display: flex; 
+            flex-direction: column;
+            
+        }
          .daily-rewards-modal h2 { color: gold; margin-top: 0; margin-bottom: 20px; }
         .daily-rewards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .daily-reward-item { background: rgba(0, 0, 0, 0.3); border: 2px solid #555; border-radius: 10px; padding: 15px 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px; box-sizing: border-box; }
@@ -510,6 +561,58 @@
         .settings-toggle-row span { min-width: 45px; text-align: right; font-variant-numeric: tabular-nums; }
         .settings-button-link { display: block; background-color: #007BFF; color: white !important; text-decoration: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; transition: background-color 0.2s; margin-top: 10px; border: none; width: 100%; box-sizing: border-box; font-size: 1em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .settings-button-link:hover { background-color: #0056b3; }
+
+        /* --- MEDIA QUERY ДЛЯ ОЧЕНЬ УЗКИХ ЭКРАНОВ (например, iPhone SE) --- */
+        @media (max-width: 375px) {
+            
+            /* 1. Общее уменьшение базового шрифта */
+            body, html {
+                font-size: 14px; 
+            }
+            
+            /* 2. Еще более компактный хедер */
+            .header-user, .header-balance {
+                padding: 3px 6px;
+                font-size: 0.9em;
+            }
+            .header-user img, .header-balance img {
+                width: 30px;
+                height: 30px;
+            }
+
+            /* 3. Еще более компактные кнопки на Лесном экране */
+            .tasks-button, .daily-rewards-button { 
+                width: 50px; 
+                height: 50px; 
+            }
+            .settings-button { 
+                width: 40px; 
+                height: 40px;
+            }
+            .daily-rewards-button { top: 68px; right: 15px; } /* Сдвиг */
+
+            /* 4. Списки (Бусты, Задания) */
+            .upgrade-item, .task-item {
+                padding: 6px;
+            }
+            .buy-btn {
+                padding: 5px 8px; /* Уменьшаем кнопки покупки */
+                font-size: 0.8em;
+            }
+            .upgrade-info .description-line, .upgrade-info .description-line-next {
+                font-size: 0.8em; /* Уменьшаем текст описаний */
+            }
+
+            /* 5. Таб-бар */
+            .tab-item {
+                font-size: 0.8em;
+            }
+            .tab-item img {
+                width: 25px;
+                height: 25px;
+            }
+        }
+        /* --- КОНЕЦ MEDIA QUERY --- */
 
     </style>
 </head>
@@ -796,10 +899,6 @@
             
             const [offlineEarnings, setOfflineEarnings] = useState(0);
             const [showOfflineModal, setShowOfflineModal] = useState(false);
-            
-            const [raidStatus, setRaidStatus] = useState('idle'); 
-            const [raidLog, setRaidLog] = useState(INITIAL_RAID_LOG);
-            const [friendsList, setFriendsList] = useState(INITIAL_FRIENDS_LIST);
 
             // Состояние для принудительной перерисовки таймера каждую секунду
             const [forceRerender, setForceRerender] = useState(0); 
@@ -872,11 +971,6 @@
                 
                 // --- ИСПРАВЛЕНИЕ: Проверка доступности клика ---
                 if (tapsToProcess <= 0 && !isInfiniteEnergy) return; 
-                // ---------------------------------------------
-                
-                if (activeTab === 'raid' && raidStatus === 'battle') {
-                     return;
-                }
                 
                 // --- ИСПРАВЛЕНИЕ: Условие главного IF ---
                 if (activeTab === 'forest' && (energy >= tapsToProcess || isInfiniteEnergy)) { 
@@ -933,7 +1027,7 @@
                         setIsSquirrelActive(false);
                     }, 150);
                 }
-            }, [musicStarted, musicVolume, activeTab, energy, isInfiniteEnergy, tapValue, raidStatus, setEnergy, setTotalTaps, setBalance, setTotalEarned, setTapAnimations, setIsSquirrelActive]);
+            }, [musicStarted, musicVolume, activeTab, energy, isInfiniteEnergy, tapValue, setEnergy, setTotalTaps, setBalance, setTotalEarned, setTapAnimations, setIsSquirrelActive]);
             // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
             
 // ... (Продолжение кода App, начиная с useEffect)
@@ -1051,7 +1145,7 @@
                     });
 
                     const loadedMaxEnergy = BASE_ENERGY + initialLevels.energyLimit * ENERGY_LIMIT_PER_LEVEL + initialPermBonusLimit;
-                    const loadedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + rechargeBonus + initialPermBonusRecharge; 
+                    const loadedRechargeRate = (1 + initialLevels.energyRecharge * ENERGY_RECHARGE_PER_LEVEL) + initialPermBonusRecharge;
 
                     let loadedEnergy = BASE_ENERGY;
                     
@@ -1511,7 +1605,6 @@
 
             // 2. Для тапов (мультитач на мобильных)
             const handleTouchStart = (e) => {
-                e.preventDefault(); // Предотвращаем стандартное действие браузера (например, масштабирование)
                 
                 // Игнорируем нажатия на золотой орех, если он активен
                 if (e.target.closest('.golden-nut-container')) {
@@ -2051,79 +2144,84 @@
         }
 
         
-        function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable, onClaim, onShowComeBackModal }) {
-            
-            const renderItem = (reward, index) => {
-                const day = index + 1;
-                let status = 'locked'; 
-                let icon = '🔒';
-                
-                if (index < currentState.currentDay) {
-                    status = 'claimed';
-                    icon = '✅';
-                } else if (index === currentState.currentDay && isAvailable) {
-                    status = 'available';
-                    icon = reward.icon;
-                } else {
-                    icon = '🔒';
-                }
-                
-                const itemClass = `daily-reward-item ${status} day-${day}`;
-                
-                if (status === 'available') {
-                    return (
-                        <button key={day} className={itemClass} onClick={onClaim}>
-                            <div className="day-label">День {day}</div>
-                            <div className="reward-icon">{icon}</div>
-                            <div className="reward-label">{reward.label}</div>
-                        </button>
-                    );
-                }
-                
-                return (
-                    <div 
-                        key={day} 
-                        className={itemClass}
-                        onClick={status === 'locked' ? onShowComeBackModal : null} 
-                        style={{ cursor: (status === 'locked') ? 'pointer' : 'default' }}
-                    >
-                        <div className="day-label">День {day}</div>
-                        <div className="reward-icon">{icon}</div>
-                        <div className="reward-label">
-                            {status === 'claimed' ? reward.label : (status === 'locked' ? '???' : reward.label)}
-                        </div>
-                    </div>
-                );
-            };
+        // НАЙТИ И ПОЛНОСТЬЮ ЗАМЕНИТЬ КОМПОНЕНТ DailyRewardsModal (строка ~2568)
 
+function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable, onClaim, onShowComeBackModal }) {
+            
+    const renderItem = (reward, index) => {
+        const day = index + 1;
+        let status = 'locked'; 
+        let icon = '🔒';
+        
+        if (index < currentState.currentDay) {
+            status = 'claimed';
+            icon = '✅';
+        } else if (index === currentState.currentDay && isAvailable) {
+            status = 'available';
+            icon = reward.icon;
+        } else {
+            icon = '🔒';
+        }
+        
+        const itemClass = `daily-reward-item ${status} day-${day}`;
+        
+        if (status === 'available') {
             return (
-                <div className="modal-overlay" onClick={onClose}>
-                    <div className="daily-rewards-modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>🎁 Ежедневные Награды</h2>
-                        <div className="daily-rewards-grid">
-                            {rewardsCatalog.map((reward, index) => renderItem(reward, index))}
-                        </div>
-                        
-                        {!isAvailable && (
-                            <div style={{marginTop: '20px', textAlign: 'center'}}>
-                                <p style={{fontSize: '1.2em', color: 'gold', fontWeight: 'bold'}}>
-                                    Следующая награда будет доступна завтра!
-                                </p>
-                                <button 
-                                    className="buy-btn" 
-                                    style={{backgroundColor: '#007BFF', marginTop: '10px'}} 
-                                    onClick={onClose}
-                                >
-                                    Закрыть
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <button key={day} className={itemClass} onClick={onClaim}>
+                    <div className="day-label">День {day}</div>
+                    <div className="reward-icon">{icon}</div>
+                    <div className="reward-label">{reward.label}</div>
+                </button>
             );
         }
-
         
+        return (
+            <div 
+                key={day} 
+                className={itemClass}
+                onClick={status === 'locked' ? onShowComeBackModal : null} 
+                style={{ cursor: (status === 'locked') ? 'pointer' : 'default' }}
+            >
+                <div className="day-label">День {day}</div>
+                <div className="reward-icon">{icon}</div>
+                <div className="reward-label">
+                    {status === 'claimed' ? reward.label : (status === 'locked' ? '???' : reward.label)}
+                </div>
+            </div>
+        );
+    }; // <-- Закрытие JSX-возврата
+    
+    // <--- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: ДОБАВЛЯЕМ ЗАКРЫВАЮЩУЮ СКОБКУ ДЛЯ ТЕЛА renderItem!
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="daily-rewards-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>🎁 Ежедневные Награды</h2>
+                <div className="daily-rewards-content">
+                <div className="daily-rewards-grid">
+                    {rewardsCatalog.map((reward, index) => renderItem(reward, index))}
+                </div>
+
+                <button 
+                    className="buy-btn" 
+                    style={{backgroundColor: '#007BFF', marginTop: '25px'}} 
+                    onClick={onClose}
+                >
+                    Закрыть
+                </button>
+                
+                {!isAvailable && (
+                    <div style={{marginTop: '20px', textAlign: 'center'}}>
+                        <p style={{fontSize: '1.2em', color: 'gold', fontWeight: 'bold'}}>
+                            Следующая награда будет доступна завтра!
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+    );
+} // <--- ВОТ ЗДЕСЬ ЗАКРЫВАЕТСЯ DailyRewardsModal
+      
         function TaskClaimModal({ task, onClaim, onClose }) {
             let rewardMessage = '';
             let title = 'Награда получена!'; 
@@ -2294,7 +2392,7 @@
              
              // Если playerPhotoUrl есть, используем его. 
              // Если нет, используем placeholder
-             const avatarSrc = playerPhotoUrl ? playerPhotoUrl : "images/avatar_placeholder.png";
+             const avatarSrc = playerPhotoUrl ? playerPhotoUrl : "images/squirrel_avatar.png";
 
             return (
                 <header className="header">
@@ -2562,7 +2660,7 @@
                 switch(activeTaskTab) {
                     case 'tap':
                         return (
-                            <>
+                            <> {/* <-- ОБЩИЙ ФРАГМЕНТ НАЧАЛО */}
                                 {tapTask ? (
                                     <TaskItem 
                                         task={tapTask} 
@@ -2583,23 +2681,22 @@
                                     />
                                 ) : (
                                     <p>Все задания "Охотник за Золотом" выполнены!</p>
-                                                )}
+                                )}
 
-                                                {/* --- ВОТ НОВЫЙ БЛОК ДЛЯ ТРАНЖИРЫ --- */}
-                                                {spendTask ? (
-                                                    <TaskItem 
-                                                        task={spendTask} 
-                                                        currentProgress={totalSpent} 
-                                                        onClaim={() => onClaim('spend_chain')} 
-                                                        onShowInfo={() => setInfoTaskId(spendTask.id)} 
-                                                    />
-                                                ) : (
-                                                    <p>Все задания "Транжира" выполнены!</p>
-                                                )}
-                                                {/* --- КОНЕЦ НОВОГО БЛОКА --- */}
-
-                                            </>
-                                        );
+                                {/* --- ВОТ БЛОК ДЛЯ ТРАНЖИРЫ --- */}
+                                {spendTask ? (
+                                    <TaskItem 
+                                        task={spendTask} 
+                                        currentProgress={totalSpent} 
+                                        onClaim={() => onClaim('spend_chain')} 
+                                        onShowInfo={() => setInfoTaskId(spendTask.id)} 
+                                    />
+                                ) : (
+                                    <p>Все задания "Транжира" выполнены!</p>
+                                )}
+                                {/* --- КОНЕЦ БЛОКА --- */}
+                            </>
+                        ); 
                     case 'balance':
                          return balanceTask ? (
                             <TaskItem 
@@ -2642,8 +2739,10 @@
                                     Назад
                                 </button>
                             </div>
+                        // ИСПРАВЛЕННЫЙ КОД:
+
                         ) : (
-                            <div>
+                            <div> {/* <-- ЭТОТ DIV БОЛЬШЕ НЕ ЗАКРЫВАЕТСЯ СРАЗУ ПОСЛЕ TABS */}
                                 <h2>Задания</h2>
                                 
                                 <div className="task-tab-bar">
@@ -2679,7 +2778,7 @@
                                 </div>
                                 
                                 <div className="task-list-content">
-                                    {renderTabContent()}
+                                    {renderTabContent()} 
                                 </div>
                             </div>
                         )}

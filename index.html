@@ -816,6 +816,8 @@
             let permBonusClick = 0;
             let permBonusRecharge = 0;
             let permBonusLimit = 0;
+
+            let isInfiniteEnergy = false;
             
             const completedMilestones = TASK_CATALOG.total_earned_chain.slice(0, taskLevels.total_earned_chain);
             completedMilestones.forEach(task => {
@@ -829,6 +831,8 @@
                 if (bonus.type === 'madness') tapMultiplier = bonus.multiplier;
                 else if (bonus.type === 'speed') rechargeBonus = bonus.rate;
                 else if (bonus.type === 'double_income') doubleIncomeMultiplier = 2;
+                else if (bonus.type === 'hyperClick') { tapMultiplier = bonus.multiplier; isInfiniteEnergy = true; }
+
             });
             
             const baseTap = (1 + levels.multitap * 1 + permBonusClick);
@@ -850,6 +854,89 @@
             const completedSpendTasks = (currentSpendTask && totalSpent >= currentSpendTask.target) ? 1 : 0;
             
             const completedTaskCount = completedTapTasks + completedBalanceTasks + completedMilestoneTasks + completedGoldenNutTasks + completedSpendTasks;
+
+            
+            // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ (processTap) ---
+            const processTap = React.useCallback((tapCount, clientX, clientY, gameScreen) => {
+                if (!musicStarted) {
+                    if (musicVolume > 0) { 
+                         audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
+                    }
+                    setMusicStarted(true);
+                }
+                
+                if (activeTab !== 'forest' && activeTab !== 'raid') return; 
+
+                // Определяем общее количество кликов/тапов
+                const tapsToProcess = Math.min(tapCount, energy); 
+                
+                // --- ИСПРАВЛЕНИЕ: Проверка доступности клика ---
+                if (tapsToProcess <= 0 && !isInfiniteEnergy) return; 
+                // ---------------------------------------------
+                
+                if (activeTab === 'raid' && raidStatus === 'battle') {
+                     return;
+                }
+                
+                // --- ИСПРАВЛЕНИЕ: Условие главного IF ---
+                if (activeTab === 'forest' && (energy >= tapsToProcess || isInfiniteEnergy)) { 
+                    
+                    // --- ИСПРАВЛЕНИЕ: Расходуем энергию, только если она НЕ бесконечна ---
+                    if (!isInfiniteEnergy) {
+                         setEnergy(e => e - tapsToProcess);
+                    }
+                    // -------------------------------------------------------------
+                    
+                    setTotalTaps(t => t + tapsToProcess);
+
+                    let totalValue = 0;
+                    const newAnimations = [];
+                    const rect = gameScreen.getBoundingClientRect();
+                    
+                    // Обрабатываем все тапы 
+                    const actualTaps = isInfiniteEnergy ? tapCount : tapsToProcess; 
+                    
+                    for (let i = 0; i < actualTaps; i++) {
+                        const isCritical = Math.random() < 0.01; 
+                        const critMultiplier = 5;
+                        
+                        // --- ИСПРАВЛЕНИЕ: Используем актуальное tapValue ---
+                        const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
+                        // --------------------------------------------------
+                        
+                        totalValue += currentTapValue;
+                        
+                        const animationX = clientX + (Math.random() * 20 - 10);
+                        const animationY = clientY + (Math.random() * 20 - 10);
+
+                        newAnimations.push({
+                            id: tapIdCounter++,
+                            value: `+${currentTapValue}`, 
+                            x: animationX - rect.left,
+                            y: animationY - rect.top,
+                            isCritical: isCritical 
+                        });
+                    }
+
+                    playSound(audioTap);
+                    setBalance(b => b + totalValue);
+                    setTotalEarned(t => t + totalValue);
+
+                    setTapAnimations(prev => [...prev, ...newAnimations]);
+
+                    setTimeout(() => {
+                        setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
+                    }, 1000);
+                    
+                    setIsSquirrelActive(true); 
+                    setTimeout(() => {
+                        setIsSquirrelActive(false);
+                    }, 150);
+                }
+            }, [musicStarted, musicVolume, activeTab, energy, isInfiniteEnergy, tapValue, raidStatus, setEnergy, setTotalTaps, setBalance, setTotalEarned, setTapAnimations, setIsSquirrelActive]);
+            // --- КОНЕЦ ЕДИНОГО ОБРАБОТЧИКА ---
+            
+// ... (Продолжение кода App, начиная с useEffect)
             
             
             // --- НОВАЯ ЛОГИКА АСИНХРОННОЙ ЗАГРУЗКИ ---
@@ -1201,10 +1288,12 @@
                             // Показываем уведомление о первом истекшем бонусе
                             const firstExpired = expiredBonuses[0];
                             setShowBonusModal({
+                                // --- ИЗМЕНЕНИЕ: Добавляем type: 'ended' ---
+                                type: 'ended', 
                                 icon: '🕰️',
                                 title: 'Бонус Завершился',
                                 message: `Действие бонуса «${firstExpired.name}» закончилось.`, 
-                                button: 'Продолжить'
+                                buttonText: 'Продолжить', // <-- Меняем с 'button' на 'buttonText' для консистентности
                             });
                             
                             // Возвращаем только неистекшие бонусы
@@ -1316,14 +1405,10 @@
                 }
             }, [musicVolume, musicStarted]);
 
-            // --- НОВАЯ ХЕЛПЕР-ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ/СУММИРОВАНИЯ БОНУСОВ ---
-            const addOrStackBonus = (newBonus) => {
-                // Убедимся, что у бонуса есть id, даже если он пришел без него
-                const bonusToApply = {
-                    ...newBonus,
-                    id: newBonus.id || Date.now()
-                };
-
+            // --- НОВАЯ ХЕЛПЕР-ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ/СУММИРОВАНИЯ БОНУСОВ (Исправленная) ---
+            const addOrStackBonus = (bonusToApply) => {
+                // bonusToApply теперь всегда приходит уже с expiresAt, id и type.
+                
                 setActiveBonuses(prev => {
                     // 1. Ищем, активен ли уже бонус этого типа
                     const existingBonusIndex = prev.findIndex(b => b.type === bonusToApply.type);
@@ -1332,7 +1417,7 @@
                         // 2. ЕСЛИ АКТИВЕН: Суммируем время
                         const existingBonus = prev[existingBonusIndex];
                         
-                        // Берем текущее время истечения и добавляем к нему длительность НОВОГО бонуса
+                        // Если игрок активирует бонус, время суммируется
                         const newExpiryTime = existingBonus.expiresAt + (bonusToApply.duration || 0) * 1000;
                         
                         // Создаем обновленный бонус с новым временем
@@ -1344,135 +1429,73 @@
                         );
                     } else {
                         // 3. ЕСЛИ НЕ АКТИВЕН: Просто добавляем новый
-                        // Рассчитываем время истечения для этого нового бонуса
-                        return [...prev, {
-                            ...bonusToApply,
-                            expiresAt: bonusToApply.expiresAt || (Date.now() + (bonusToApply.duration || 0) * 1000)
-                        }];
+                        return [...prev, bonusToApply];
                     }
                 });
             };
             // --- КОНЕЦ ХЕЛПЕР-ФУНКЦИИ ---
             
             
-            // --- ОБНОВЛЕННАЯ ЛОГИКА handleGoldenNutClick ---
+            // --- ОБНОВЛЕННАЯ ЛОГИКА handleGoldenNutClick (ФИНАЛЬНАЯ ВЕРСИЯ) ---
             const handleGoldenNutClick = (e) => {
                  e.stopPropagation(); 
 
                  if (!showGoldenNut) return;
 
-                 setTotalGoldenNutsCaught(t => t + 1); // <-- ДОБАВЬ ЭТО. Увеличиваем счетчик
-
+                 setTotalGoldenNutsCaught(t => t + 1); 
                  setShowGoldenNut(false);
                  
                  const bonuses = [
-                     // Добавлены duration и multiplier/rate для консистентности
                      { type: 'instant', name: 'Орехопад', value: 1000, duration: 0, multiplier: 1, rate: 0 },
                      { type: 'madness', name: 'Безумие', multiplier: 10, duration: 10, rate: 0 },
                      { type: 'speed', name: 'Ускорение', rate: 15, duration: 10, multiplier: 1 },
+                     { type: 'hyperClick', name: 'Гипер-клик', multiplier: 5, duration: 10, rate: 0 } 
                  ];
                  
                  const chosenBonus = bonuses[Math.floor(Math.random() * bonuses.length)];
 
+                 // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Зачисляем instant-бонус СРАЗУ ---
                  if (chosenBonus.type === 'instant') {
-                     // Логика мгновенной награды остается прежней
-                     setBalance(b => b + chosenBonus.value);
+                     setBalance(b => b + chosenBonus.value); // <-- ЗДЕСЬ НАГРАДА ЗАЧИСЛЯЕТСЯ
                      setTotalEarned(t => t + chosenBonus.value); 
+                     
                      setShowBonusModal({ 
+                         type: 'instant',
                          icon: '🎉', 
                          title: chosenBonus.name, 
                          message: `Вы получили ${chosenBonus.value} $NUT!`, 
-                         button: 'Забрать' 
+                         buttonText: 'Забрать',
+                         bonusData: chosenBonus // Передаем объект бонуса для активации
                      });
-                 } else {
-                     // --- НОВАЯ ЛОГИКА С ХЕЛПЕРОМ ---
-                     // Просто передаем бонус в нашу "умную" функцию
-                     addOrStackBonus(chosenBonus);
                      
-                     // Логика модального окна остается прежней
+                 } else {
+                     // Для временных бонусов: только показываем модальное окно (зачисление в activateBonus)
                      let message = '';
+                     let icon = '⚡';
+                     
                      if (chosenBonus.type === 'madness') {
                          message = `Ваш клик в ${chosenBonus.multiplier} раз сильнее на ${chosenBonus.duration} секунд!`;
                      } else if (chosenBonus.type === 'speed') {
                          message = `Регенерация энергии +${chosenBonus.rate}/сек на ${chosenBonus.duration} секунд!`;
+                     } else if (chosenBonus.type === 'hyperClick') {
+                         message = `Ваш клик в ${chosenBonus.multiplier} раз сильнее, а ЭНЕРГИЯ БЕСКОНЕЧНА на ${chosenBonus.duration} секунд!`;
+                         icon = '👑';
                      }
-                     
+
                      setShowBonusModal({ 
-                         icon: '⚡', 
+                         type: 'timed',
+                         icon: icon, 
                          title: chosenBonus.name, 
                          message: message, 
-                         button: 'Отлично!' 
+                         buttonText: `Активировать (${chosenBonus.duration}с)`,
+                         bonusData: chosenBonus // Передаем объект бонуса для активации
                      });
                  }
             };
             // --- КОНЕЦ ОБНОВЛЕННОЙ ЛОГИКИ handleGoldenNutClick ---
-            
-            // --- НОВЫЙ ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ КЛИКОВ И ТАЧЕЙ ---
-            const processTap = (tapCount, clientX, clientY, gameScreen) => {
-                if (!musicStarted) {
-                    if (musicVolume > 0) { 
-                         audioMusicRef.current.play().catch(e => console.error("Ошибка воспроизведения музыки:", e));
-                    }
-                    setMusicStarted(true);
-                }
-                
-                if (activeTab !== 'forest' && activeTab !== 'raid') return; 
 
-                // Определяем общее количество кликов/тапов
-                const tapsToProcess = Math.min(tapCount, energy); 
-                if (tapsToProcess <= 0) return;
-                
-                if (activeTab === 'raid' && raidStatus === 'battle') {
-                     // Логика рейдов остается заблокированной
-                     // handleRaidTap(tapsToProcess);
-                     return;
-                }
-                
-                if (activeTab === 'forest' && energy >= tapsToProcess) { 
-                    setEnergy(e => e - tapsToProcess);
-                    setTotalTaps(t => t + tapsToProcess);
 
-                    let totalValue = 0;
-                    const newAnimations = [];
-                    const rect = gameScreen.getBoundingClientRect();
-                    
-                    for (let i = 0; i < tapsToProcess; i++) {
-                        const isCritical = Math.random() < 0.01; 
-                        const critMultiplier = 5;
-                        const currentTapValue = isCritical ? (tapValue * critMultiplier) : tapValue;
-                        totalValue += currentTapValue;
-                        
-                        // Случайное смещение для каждой анимации, чтобы они не накладывались
-                        const animationX = clientX + (Math.random() * 20 - 10);
-                        const animationY = clientY + (Math.random() * 20 - 10);
-
-                        newAnimations.push({
-                            id: tapIdCounter++,
-                            value: `+${currentTapValue}`, 
-                            x: animationX - rect.left,
-                            y: animationY - rect.top,
-                            isCritical: isCritical 
-                        });
-                    }
-
-                    playSound(audioTap);
-                    setBalance(b => b + totalValue);
-                    setTotalEarned(t => t + totalValue);
-
-                    setTapAnimations(prev => [...prev, ...newAnimations]);
-
-                    // Удаляем анимации через 1 секунду
-                    setTimeout(() => {
-                        setTapAnimations(prev => prev.filter(tap => !newAnimations.includes(tap)));
-                    }, 1000);
-                    
-                    // --- НОВАЯ ЛОГИКА АКТИВАЦИИ АНИМАЦИИ ---
-                    setIsSquirrelActive(true); 
-                    setTimeout(() => {
-                        setIsSquirrelActive(false);
-                    }, 150);
-                }
-            };
+           
 
             // 1. Для кликов мышью (на десктопе)
             const handleTap = (e) => {
@@ -1595,6 +1618,32 @@
                     }
                 }
             }; // <-- Конец функции
+
+            // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ АКТИВАЦИИ БОНУСА И ЗАПУСКА ТАЙМЕРА ---
+            const activateBonus = (bonusToActivate) => {
+                // 1. Немедленные бонусы
+                if (bonusToActivate.type === 'instant') {
+                    // Мгновенные бонусы уже зачислены в handleGoldenNutClick,
+                    // но на всякий случай, если бы мы их зачисляли здесь:
+                    // setBalance(b => b + bonusToActivate.value);
+                    // setTotalEarned(t => t + bonusToActivate.value);
+                    
+                } else {
+                    // 2. Временные бонусы (madness, speed, hyperClick, double_income)
+                    
+                    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Добавляем время истечения СЕЙЧАС ---
+                    const now = Date.now();
+                    const bonusWithExpiry = {
+                        ...bonusToActivate,
+                        expiresAt: now + (bonusToActivate.duration || 0) * 1000,
+                        id: Date.now() 
+                    };
+                    // Используем "умную" функцию для добавления/суммирования
+                    addOrStackBonus(bonusWithExpiry); 
+                }
+                // Закрываем модальное окно после активации
+                setShowBonusModal(null);
+            };
             
             const confirmClaimTask = (task) => {
                 if (task.type === 'tap') {
@@ -1722,6 +1771,8 @@
                                                 bonusText = `⚡️ Ускорение: +${bonus.rate} ⚡️/сек (${timeLeft}с)`;
                                             } else if (bonus.type === 'double_income') {
                                                 bonusText = `💰 Двойной Доход (${timeLeft}с)`;
+                                            } else if (bonus.type === 'hyperClick') {
+                                                bonusText = `👑 Гипер-клик: x${bonus.multiplier} + ∞ ⚡️ (${timeLeft}с)`;
                                             }
 
                                             return (
@@ -1829,6 +1880,7 @@
                                     <BonusNotificationModal 
                                         details={showBonusModal}
                                         onClose={() => setShowBonusModal(null)}
+                                        onActivate={activateBonus}
                                     />
                                 )}
                                 {showTasksModal && (
@@ -1893,7 +1945,7 @@
                                 )}
 
 
-                                <EnergyBar energy={energy} maxEnergy={maxEnergy} />
+                                <EnergyBar energy={energy} maxEnergy={maxEnergy} isInfinite={isInfiniteEnergy} />
 
                                 <TabBar activeTab={activeTab} onTabClick={setActiveTab} />
                             
@@ -2103,23 +2155,43 @@
             );
         }
 
-        
-        function BonusNotificationModal({ details, onClose }) {
-             const titleClass = details.type === 'instant' 
-                ? 'success' 
-                : (details.title === 'Бонус Завершился' ? 'ended' : 'max-level');
-             const buttonColor = details.type === 'instant' ? '#4CAF50' : '#007BFF';
 
+        // Полная замена компонента BonusNotificationModal (~1746)
+
+        function BonusNotificationModal({ details, onClose, onActivate }) {
+             
+             // Кнопка закрытия/забора/продолжения
+             const handleCloseOrActivate = () => {
+                 // 1. Если это временный бонус с Золотого Ореха -> Активируем таймер.
+                 if (details.type === 'timed') {
+                     onActivate(details.bonusData);
+                 // 2. Если это истечение времени ИЛИ мгновенный бонус -> Просто закрываем.
+                 } else {
+                     onClose(); 
+                 }
+             };
+
+             // Устанавливаем класс и цвет для модального окна
+             const isEnded = details.type === 'ended';
+             const titleClass = isEnded ? 'ended' : (details.type === 'instant' ? 'success' : 'max-level');
+             const buttonColor = isEnded ? '#007BFF' : (details.type === 'instant' || details.type === 'timed' ? '#4CAF50' : '#007BFF');
+             
             return (
-                <div className="modal-overlay" onClick={onClose}>
+                // Используем handleCloseOrActivate, чтобы модалка закрылась по клику на оверлей
+                <div className="modal-overlay" onClick={handleCloseOrActivate}> 
                     <div className="app-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="icon level-icon">{details.icon}</div>
                         <h3 className={titleClass}>{details.title}</h3>
                         <p>
                             {details.message}
                         </p>
-                        <button className="buy-btn" style={{backgroundColor: buttonColor}} onClick={onClose}>
-                            {details.button}
+                        
+                        <button 
+                            className="buy-btn" 
+                            style={{backgroundColor: buttonColor}} 
+                            onClick={handleCloseOrActivate} // Вызываем нашу новую логику
+                        >
+                            {details.buttonText}
                         </button>
                     </div>
                 </div>
@@ -2244,18 +2316,30 @@
             );
         }
 
-        function EnergyBar({ energy, maxEnergy }) {
-            const percentage = (energy / maxEnergy) * 100;
+        // Компонент EnergyBar (полная замена)
+
+        function EnergyBar({ energy, maxEnergy, isInfinite }) { 
+                    
+            // --- НОВАЯ ЛОГИКА ОТОБРАЖЕНИЯ И ЗНАЧЕНИЙ ---
+            const percentage = isInfinite ? 100 : (energy / maxEnergy) * 100;
+            const energyValue = isInfinite ? '∞' : Math.floor(energy);
+            const maxValue = isInfinite ? '∞' : maxEnergy;
+            // -------------------------------------------
+
             return (
                 <div className="energy-bar-container">
                     <div className="energy-bar-label">
                         <span>⚡️ Энергия</span>
-                        <span>{Math.floor(energy)} / {maxEnergy}</span>
+                        <span>{energyValue} / {maxValue}</span>
                     </div>
                     <div className="energy-bar-fill">
                         <div 
                             className="energy-bar-inner" 
-                            style={{ width: `${percentage}%` }}>
+                            style={{ 
+                                width: `${percentage}%`,
+                                // Меняем цвет градиента для визуала
+                                background: isInfinite ? 'linear-gradient(90deg, #00BFFF, #1E90FF)' : 'linear-gradient(90deg, #64DD17, #33B760)' 
+                            }}>
                         </div>
                     </div>
                 </div>

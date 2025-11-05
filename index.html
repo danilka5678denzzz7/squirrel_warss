@@ -1703,14 +1703,17 @@
                     setBalance(b => b + reward.value);
                     setTotalEarned(t => t + reward.value);
                 } else if (reward.type === 'bonus') {
-                    // Создаем объект бонуса из награды
-                    const bonus = { 
+                    // --- ИСПРАВЛЕНИЕ: Прямая активация временного бонуса (с расчетом expiresAt) ---
+                    const now = Date.now();
+                    const bonusWithExpiry = { 
                         ...reward.bonus, // Здесь уже есть type, name и duration
+                        expiresAt: now + (reward.bonus.duration || 0) * 1000, // <--- КЛЮЧЕВОЙ РАСЧЕТ ТАЙМЕРА
                         id: Date.now()
                     };
                     
-                    // Вызываем "умную" функцию
-                    addOrStackBonus(bonus); // <-- ИСПРАВЛЕНО
+                    // Вызываем "умную" функцию для добавления/суммирования
+                    addOrStackBonus(bonusWithExpiry); 
+                    // -----------------------------------------------------------------------------
                 }    
 
                 setDailyRewardsState({
@@ -1720,11 +1723,14 @@
                 setIsDailyRewardAvailable(false); 
                 
                 setShowDailyRewardsModal(false);
+                // Показываем МОДАЛЬНОЕ ОКНО ТОЛЬКО ДЛЯ УВЕДОМЛЕНИЯ О ПОЛУЧЕНИИ
                 setShowBonusModal({
+                    // Устанавливаем type: 'instant' или любой другой тип, который просто закрывается (т.к. активация уже произошла)
+                    type: 'instant', 
                     icon: reward.icon,
                     title: 'Награда получена!',
                     message: `Вы получили: ${reward.label}!`,
-                    button: 'Отлично!'
+                    buttonText: 'Отлично!' // Используем buttonText для консистентности
                 });
             };
 

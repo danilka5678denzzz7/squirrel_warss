@@ -1827,19 +1827,36 @@
 
                 } else if (reward.type === 'bonus') {
                     
-                    // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: НЕ АКТИВИРУЕМ, А ПОКАЗЫВАЕМ МОДАЛЬНОЕ ОКНО АКТИВАЦИИ ---
-                    let message = `Ваш клик в ${reward.bonus.multiplier} раз сильнее на ${reward.bonus.duration} секунд!`;
+                    const bonusData = reward.bonus;
+                    const duration = bonusData.duration;
+                    let message = '';
+                    let icon = '⚡';
+
+                    // --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: ГЕНЕРАЦИЯ СООБЩЕНИЯ В ЗАВИСИМОСТИ ОТ ТИПА БОНУСА ---
+                    if (bonusData.type === 'madness') {
+                        // Исправляет undefined, используя multiplier
+                        message = `Ваш клик в ${bonusData.multiplier} раз сильнее на ${duration} секунд!`;
+                    } else if (bonusData.type === 'speed') {
+                        // Исправляет undefined, используя rate
+                        message = `Регенерация энергии +${bonusData.rate}/сек на ${duration} секунд!`;
+                    } else if (bonusData.type === 'hyperClick') {
+                        // Для будущих бонусов
+                        message = `Ваш клик в ${bonusData.multiplier} раз сильнее, а ЭНЕРГИЯ БЕСКОНЕЧНА на ${duration} секунд!`;
+                        icon = '👑';
+                    } else {
+                        message = `Бонус "${bonusData.name}" активируется на ${duration} секунд!`;
+                    }
+                    // --- КОНЕЦ ГЕНЕРАЦИИ СООБЩЕНИЯ ---
                     
                     // Показываем модальное окно, которое запустит таймер только после нажатия кнопки
                     setShowBonusModal({ 
                         type: 'timed', // Тип, который требует активации
-                        icon: '⚡', 
-                        title: reward.bonus.name, 
-                        message: message, 
-                        buttonText: `Активировать (${reward.bonus.duration}с)`,
-                        bonusData: reward.bonus // Передаем данные бонуса для активации в `activateBonus`
+                        icon: icon, // Используем правильную иконку
+                        title: bonusData.name, 
+                        message: message, // Передаем сгенерированное сообщение
+                        buttonText: `Активировать (${duration}с)`,
+                        bonusData: bonusData // Передаем данные бонуса для активации в `activateBonus`
                     });
-                    // ---------------------------------------------------------------------------------
                 }
             };
 

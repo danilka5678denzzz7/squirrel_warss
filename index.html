@@ -2862,6 +2862,7 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
         }
 
 
+        // (Строка ~1968)
         function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 
@@ -2878,12 +2879,14 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
                      buttonClass = 'max-level'; 
                      isDisabled = true;
                 } else {
-                     buttonText = `Ур. ${level + 1} за ${cost.toLocaleString('ru-RU')} $NUT`;
+                     // --- ИСПРАВЛЕНИЕ: Используем formatBalance для сокращения цены ---
+                     buttonText = `Ур. ${level + 1} за ${formatBalance(cost)} $NUT`;
                      buttonClass = '';
                      isDisabled = !canAfford;
                 }
             } else if (upgrade.type === 'once' && !isPurchased) {
-                buttonText = `${cost.toLocaleString('ru-RU')} $NUT`;
+                // --- ИСПРАВЛЕНИЕ: Используем formatBalance для сокращения цены ---
+                buttonText = `${formatBalance(cost)} $NUT`;
                 buttonClass = '';
                 isDisabled = !canAfford;
             }

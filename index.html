@@ -1747,19 +1747,25 @@
                         tap_chain: prev.tap_chain + 1
                     }));
                 } else if (task.type === 'balance') {
-                    // Создаем объект бонуса из награды
-                    const bonus = { 
-                        ...task.reward, // Здесь уже есть type, name и duration
-                        id: Date.now()
+                    // --- ИСПРАВЛЕНИЕ ДЛЯ ОШИБКИ 'NaNc' ---
+                    
+                    // 1. Рассчитываем время истечения бонуса (текущее время + длительность)
+                    const now = Date.now();
+                    const bonusWithExpiry = { 
+                        ...task.reward, // Копируем данные бонуса (type, name, duration)
+                        expiresAt: now + (task.reward.duration || 0) * 1000, // <--- КЛЮЧЕВОЙ РАСЧЕТ ТАЙМЕРА
+                        id: Date.now() // Уникальный ID
                     };
                     
-                    // Вызываем "умную" функцию вместо прямого добавления
-                    addOrStackBonus(bonus); // <-- ИСПРАВЛЕНО
+                    // 2. Передаем полный объект бонуса с таймером в "умную" функцию
+                    addOrStackBonus(bonusWithExpiry); 
+                    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
                     
                     setTaskLevels(prev => ({
                         ...prev,
                         balance_chain: prev.balance_chain + 1
                     }));
+
 
                 // (Строка ~856)
                 } else if (task.type === 'milestone') {
@@ -1786,45 +1792,55 @@
                 setShowTaskClaimModal(null);
                 setActiveTab('forest'); 
             };
+
             
             const handleClaimDailyReward = () => {
                 if (!isDailyRewardAvailable) return;
 
                 const reward = DAILY_REWARDS_CATALOG[dailyRewardsState.currentDay];
                 
-                if (reward.type === 'nut') {
-                    setBalance(b => b + reward.value);
-                    setTotalEarned(t => t + reward.value);
-                } else if (reward.type === 'bonus') {
-                    // --- ИСПРАВЛЕНИЕ: Прямая активация временного бонуса (с расчетом expiresAt) ---
-                    const now = Date.now();
-                    const bonusWithExpiry = { 
-                        ...reward.bonus, // Здесь уже есть type, name и duration
-                        expiresAt: now + (reward.bonus.duration || 0) * 1000, // <--- КЛЮЧЕВОЙ РАСЧЕТ ТАЙМЕРА
-                        id: Date.now()
-                    };
-                    
-                    // Вызываем "умную" функцию для добавления/суммирования
-                    addOrStackBonus(bonusWithExpiry); 
-                    // -----------------------------------------------------------------------------
-                }    
-
-                setDailyRewardsState({
+                // 1. Обновляем состояние на следующий день (независимо от типа награды)
+                const newDailyRewardsState = {
                     currentDay: (dailyRewardsState.currentDay + 1) % 7, 
                     lastClaimedTimestamp: Date.now() 
-                });
+                };
+                setDailyRewardsState(newDailyRewardsState);
                 setIsDailyRewardAvailable(false); 
                 
                 setShowDailyRewardsModal(false);
-                // Показываем МОДАЛЬНОЕ ОКНО ТОЛЬКО ДЛЯ УВЕДОМЛЕНИЯ О ПОЛУЧЕНИИ
-                setShowBonusModal({
-                    // Устанавливаем type: 'instant' или любой другой тип, который просто закрывается (т.к. активация уже произошла)
-                    type: 'instant', 
-                    icon: reward.icon,
-                    title: 'Награда получена!',
-                    message: `Вы получили: ${reward.label}!`,
-                    buttonText: 'Отлично!' // Используем buttonText для консистентности
-                });
+
+                // 2. Логика выдачи награды и отображения модального окна
+                if (reward.type === 'nut') {
+                    // Мгновенно зачисляем $NUT
+                    setBalance(b => b + reward.value);
+                    setTotalEarned(t => t + reward.value);
+                    
+                    // Показываем простое модальное окно уведомления
+                    setShowBonusModal({
+                        type: 'instant', 
+                        icon: reward.icon,
+                        title: 'Награда получена!',
+                        message: `Вы получили: ${reward.label}!`,
+                        buttonText: 'Отлично!',
+                        bonusData: null // Нет данных для активации
+                    });
+
+                } else if (reward.type === 'bonus') {
+                    
+                    // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: НЕ АКТИВИРУЕМ, А ПОКАЗЫВАЕМ МОДАЛЬНОЕ ОКНО АКТИВАЦИИ ---
+                    let message = `Ваш клик в ${reward.bonus.multiplier} раз сильнее на ${reward.bonus.duration} секунд!`;
+                    
+                    // Показываем модальное окно, которое запустит таймер только после нажатия кнопки
+                    setShowBonusModal({ 
+                        type: 'timed', // Тип, который требует активации
+                        icon: '⚡', 
+                        title: reward.bonus.name, 
+                        message: message, 
+                        buttonText: `Активировать (${reward.bonus.duration}с)`,
+                        bonusData: reward.bonus // Передаем данные бонуса для активации в `activateBonus`
+                    });
+                    // ---------------------------------------------------------------------------------
+                }
             };
 
             

@@ -139,11 +139,13 @@
         }
         .boost-header h2 {
             margin: 0;
-            font-size: 1.8em;
+            /* Используем 1.5em, чтобы быть уверенными, что поместится */
+            font-size: 1.5em; 
             color: gold;
             text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.5);
             font-weight: 900;
             letter-spacing: 1px;
+            /* Удалены white-space: nowrap и overflow: hidden */
         }
 
         .golden-nut-container {
@@ -1964,11 +1966,27 @@
                                 />
                             </div>
                         );
+                    // ...
+                    case 'home': // <--- ДОБАВЛЕНО
+                        return (
+                            // Используем скролл-контейнер, чтобы контент не был прижат
+                            <div className="game-screen-scroll"> 
+                                <HomeScreen 
+                                    levels={levels} 
+                                    balance={balance} 
+                                    vaultBalance={0} // Заглушка, если нет реального состояния
+                                    vaultCapacity={1000} // Заглушка
+                                    myBaseHp={1000} // Заглушка
+                                    onBuy={() => {}} // Заглушка
+                                    onVaultAction={() => {}} // Заглушка
+                                />
+                            </div>
+                        );
                     case 'raid':
-                    case 'home':
                     case 'squad':
                         return <LockedScreen tab={activeTab} />;
                     default:
+// ...
                         return <div className="forest-content" onClick={handleTap} onTouchStart={handleTouchStart}><ForestScreen /></div>;
                 }
             };
@@ -2637,7 +2655,27 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
 
 
         function HomeScreen({ levels, balance, vaultBalance, vaultCapacity, myBaseHp, onBuy, onVaultAction }) {
-            return null;
+            // ВРЕМЕННЫЙ КОНТЕНТ:
+            return (
+                // Используем класс для скролла, чтобы контент не был прижат
+                <div className="game-screen-scroll"> 
+                    <div className="upgrade-list">
+                        <div className="boost-header">
+                            <h2>🏠 Дупло (Защита)</h2>
+                        </div>
+                        
+                        <div className="upgrade-item" style={{display: 'block', padding: '15px', textAlign: 'center'}}>
+                            <p style={{color: '#FFD700', fontWeight: 'bold', fontSize: '1.2em'}}>
+                                Сейф и Защита в Разработке
+                            </p>
+                            <p style={{color: '#ccc', fontSize: '0.9em', marginTop: '10px'}}>
+                                Здесь будут улучшения для защиты вашего Дупла от набегов и увеличения вместимости Сейфа.
+                            </p>
+                        </div>
+                        
+                    </div>
+                </div>
+            );
         }
         
         function RaidWrapper({ /* ... */ }) {

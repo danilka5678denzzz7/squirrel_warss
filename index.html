@@ -391,29 +391,19 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 8px 10px; 
+            padding: 8px 10px; /* УМЕНЬШЕНО с 10px 15px */
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             flex-shrink: 0;
             transition: background-color 0.3s;
-            font-size: 0.9em; 
+            font-size: 0.9em; /* НОВОЕ: Чуть меньше шрифт */
             line-height: 1.1;
-            /* --- НОВОЕ: Стили для объемности --- */
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 0, 0, 0.2); 
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); 
-            border-bottom: 2px solid rgba(0, 0, 0, 0.3); /* Имитация глубины */
-            /* ------------------------------------- */
         }
         .buy-btn:disabled {
             background-color: #555;
             cursor: not-allowed;
             animation: none; 
-        }
-        .buy-btn:active {
-            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.2); 
-            transform: translateY(2px);
-            border-bottom: 0;
         }
         .buy-btn.purchased { 
             background-color: #3F51B5; 
@@ -421,20 +411,6 @@
         .buy-btn.max-level {
             background-color: #CC0000;
             cursor: not-allowed;
-        }
-        /* Добавим стили для кнопок Вложить/Забрать в VaultControls */
-        .vault-controls-btn-container {
-             display: flex;
-             gap: 20px; /* Увеличиваем отступ, как на референсе */
-             justify-content: center;
-             margin-bottom: 15px;
-        }
-
-        .vault-controls .buy-btn {
-            min-width: 120px; /* Фиксируем ширину для лучшего вида */
-            padding: 12px 20px; /* Увеличиваем padding */
-            font-size: 1.1em;
-            font-weight: 800;
         }
         
         .raid-content { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 20px; }
@@ -640,423 +616,6 @@
         }
         /* --- КОНЕЦ MEDIA QUERY --- */
 
-        /* --- НОВЫЙ СТИЛЬ ДЛЯ ЭКРАНА "ДУПЛО" --- */
-        .app-container.home-active {
-            /* Используем более темный и защищенный фон */
-            background-image: url('images/bg_burrow_inside.png'); /* ВАШЕ ИЗОБРАЖЕНИЕ */
-            background-color: #333;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 0.5s ease-in-out; /* Плавный переход */
-        }
-        
-        /* Делаем прокручиваемый контент прозрачным, чтобы видеть фон */
-        .app-container.home-active .game-screen-scroll {
-             background: transparent;
-        }
-        /* --- КОНЕЦ НОВОГО СТИЛЯ --- *
-        
-        /* Стиль для плашек Прочности и Сейфа */
-        .home-stats-bar-container {
-            /* --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: АБСОЛЮТНОЕ ПОЗИЦИОНИРОВАНИЕ --- */
-            position: absolute; 
-            top: 100px; /* ЭТО ВАШ НОВЫЙ КОНТРОЛЬ ПОЛОЖЕНИЯ (Опускание/Поднятие) */
-            left: 50%;
-            transform: translateX(-50%); /* Центрирование */
-            z-index: 10;
-            /* ---------------------------------------------------- */
-            
-            display: flex;
-            flex-direction: column; 
-            gap: 10px;
-            padding: 0; 
-            
-            /* Устанавливаем ширину, чтобы не выходило за границы */
-            width: 90%; 
-            max-width: 400px;
-            
-            /* Удаляем лишние margin, так как теперь управляем через 'top' */
-            margin: 0; 
-        }
-
-        .home-header-image {
-            text-align: center;
-            margin-top: -60px; 
-            margin-bottom: 0px; /* Устанавливаем в ноль, чтобы не перекрывать плашки */
-        }
-
-        .home-stat-plaque {
-            width: 100%; /* Занимает 100% ширины своего контейнера */
-            max-width: 400px;
-            margin: 0 auto;
-            
-            /* --- КРИТИЧЕСКИЙ FIX: box-sizing --- */
-            box-sizing: border-box; 
-            /* ---------------------------------- */
-            
-            display: flex;
-            flex-direction: column; 
-            align-items: flex-start; 
-            
-            padding: 10px 15px; 
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 0.9em;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .home-stat-plaque img {
-            width: 20px; 
-            height: 20px; 
-            margin-right: 5px; 
-        }
-
-        /* --- НОВЫЕ СТИЛИ: ПРОЗРАЧНОСТЬ И ЦВЕТА --- */
-        .plaque-hp {
-            /* Полупрозрачный зеленый фон */
-            background: rgba(76, 175, 80, 0.4); 
-            border-color: rgba(76, 175, 80, 0.7); /* Более четкая зеленая рамка */
-        }
-
-        .plaque-vault {
-            /* Полупрозрачный желтый фон */
-            background: rgba(255, 215, 0, 0.4); 
-            border-color: rgba(255, 215, 0, 0.7); /* Более четкая желтая рамка */
-            color: white; /* Делаем текст белым (как в референсе) */
-        }
-
-        .plaque-vault span {
-             color: white !important;
-        }
-        
-        /* Секция управления Сейфом */
-        .vault-controls {
-            text-align: center;
-            padding: 15px;
-            margin-bottom: 25px;
-            background: none
-            border-radius: 15px;
-        }
-        .vault-controls h4 {
-            color: #ccc;
-            margin: 0 0 15px 0;
-            font-size: 1.1em;
-        }
-
-        /* Контейнер для двух карточек улучшений (теперь без прокрутки) */
-        .defense-cards-container {
-            display: flex;
-            gap: 15px; /* Увеличиваем отступ */
-            padding: 0 15px 30px 15px;
-            /* УДАЛЯЕМ overflow-x: auto; и стили прокрутки */
-        }
-        .defense-cards-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .defense-card {
-            min-width: 48%; /* Делаем карточку 48% ширины, чтобы вместить две с отступом 15px */
-            flex-grow: 1; /* Позволяем им расти, чтобы закрыть всю ширину */
-            flex-shrink: 0;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            padding: 10px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            transition: transform 0.1s;
-        }
-        .defense-card:active {
-             transform: scale(0.98);
-        }
-
-        .defense-card-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 8px auto;
-            background: #555;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .defense-card-icon img {
-             width: 80%;
-             height: 80%;
-             object-fit: contain;
-        }
-        
-        .defense-card h5 {
-            font-size: 0.9em;
-            margin: 5px 0;
-            color: gold;
-        }
-        .defense-card .level {
-            font-size: 0.75em;
-            color: #ccc;
-            margin-bottom: 5px;
-        }
-        
-        .defense-card-cost {
-            display: block;
-            background-color: #38761D;
-            color: white;
-            padding: 5px;
-            border-radius: 8px;
-            margin-top: 8px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        .defense-card-cost.purchased {
-             background-color: #3F51B5;
-        }
-        .defense-card-cost.max {
-             background-color: #CC0000;
-        }
-        .defense-card-cost:disabled {
-             background-color: #555;
-        }
-
-        /* --- СТИЛИ ДЛЯ ПОЛОСЫ ПРОГРЕССА В ПЛАШКАХ HOME --- */
-        .stat-bar-container {
-            width: 100%;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.3); /* Цвет фона пустой полосы */
-            border-radius: 4px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-        .stat-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-        /* --- КОНЕЦ СТИЛЕЙ ПОЛОСЫ --- */
-        
-        /* Изменение стилей плашек для лучшего отображения */
-        .home-stat-plaque {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column; /* Изменяем направление на вертикальное */
-            align-items: flex-start; /* Выравнивание текста и полосы слева */
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 0.9em;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .plaque-content-row {
-             display: flex;
-             align-items: center;
-             width: 100%;
-             justify-content: space-between;
-             overflow: hidden; 
-        }
-
-        /* --- КРИТИЧЕСКИЙ FIX: Отключаем обрезание на вкладке Дупло --- */
-        .app-container.home-active .game-screen {
-             /* Этот параметр разрешает контенту (двери и плашке HP) выходить за границы */
-             overflow: visible; 
-        }
-
-        /* Также, если вы используете HomeHPComponent, убедитесь, что он не обрезан */
-        .app-container.home-active .game-screen-scroll {
-             /* Убираем лишний padding сверху, который может оставить пустое место */
-             padding-top: 0 !important; 
-             /* Убедитесь, что нет overflow: hidden здесь */
-             overflow-x: hidden; 
-        }
-
-        /* --- НОВЫЙ СТИЛЬ: Единая Плашка Статуса Дупла --- */
-        .duplo-status-plaque {
-            width: 90%; /* Занимает 90% ширины экрана */
-            max-width: 400px; /* Ограничиваем максимальную ширину */
-            margin: 15px auto 25px auto; /* Центрируем и добавляем верхний/нижний отступ */
-            padding: 10px 15px;
-            
-            /* Желтый/золотой градиент с прозрачностью */
-            background: rgba(255, 215, 0, 0.4); 
-            border: 2px solid rgba(255, 215, 0, 0.7);
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            
-            color: white; /* Цвет текста */
-            font-weight: bold;
-            display: flex; /* Используем flex для выравнивания */
-            flex-direction: column; 
-            gap: 5px;
-        }
-
-        .duplo-status-row {
-            display: flex;
-            justify-content: space-between; /* Разносим иконку/текст и значение */
-            align-items: center;
-            font-size: 1em;
-        }
-        .duplo-status-row img {
-            width: 25px; 
-            height: 25px;
-            margin-right: 8px;
-        }
-        /* --- КОНЕЦ НОВОГО СТИЛЯ --- */
-
-        /* --- СТИЛЬ ДЛЯ КОМПАКТНОЙ HP-ПЛАШКИ --- */
-        .hp-plaque-compact {
-            /* Убедимся, что он центрирован по горизонтали */
-            margin: 0 auto; 
-            margin-bottom: 10px; /* Отступ от плашки Сейфа */
-            
-            /* Жесткие размеры */
-            width: 120px; 
-            padding: 5px 8px; 
-            
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-
-            /* Визуальные стили */
-            background: rgba(76, 175, 80, 0.9); /* Почти непрозрачный зеленый */
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 15px; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-            
-            color: white; 
-            font-weight: bold;
-            font-size: 1em;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        /* --- КОНЕЦ СТИЛЯ --- */
-
-        /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА И КНОПОК "ДУПЛО" (по референсу) --- */
-
-        /* Контейнер для кнопок внизу */
-        .home-bottom-nav {
-            position: absolute;
-            bottom: 60px; /* Отступ от нижнего края (над таб-баром) */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95%;
-            max-width: 400px;
-            display: flex;
-            gap: 10px;
-            z-index: 20; /* Поверх контента, но под модальным окном */
-        }
-
-        /* Стиль самой кнопки (как на референсе) */
-        .home-nav-btn {
-            flex: 1; /* Кнопки делят ширину */
-            padding: 12px 10px;
-            font-size: 1em;
-            font-weight: bold;
-            color: white;
-            
-            /* Коричневый фон (как на референсе) */
-            background-color: #4b3a2a; 
-            
-            /* Рамка "под дерево" (как на референсе) */
-            border: 2px solid #a37b4f;
-            border-top-color: #c9a37a;
-            border-left-color: #c9a37a;
-            
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-            cursor: pointer;
-            transition: transform 0.1s ease;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        .home-nav-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Оверлей модального окна */
-        .home-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 30;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        /* Контент модального окна (с рамкой из референса) */
-        .home-modal-content {
-            width: 100%;
-            max-width: 380px;
-            background: #3a2e22; /* Темно-коричневый фон */
-            border: 4px solid #a37b4f; /* Внешняя рамка */
-            outline: 2px solid #5d4a36; /* Внутренняя тень-рамка */
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            box-sizing: border-box;
-            animation: fadeIn 0.2s ease-out;
-        }
-        
-        /* Заголовок внутри модального окна */
-        .home-modal-title {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #FFD700;
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-        }
-        /* --- КОНЕЦ СТИЛЕЙ "ДУПЛО" --- */
-        
-        /* --- ИСПРАВЛЕНИЕ: Контейнер прокрутки должен быть выше кнопок --- */
-        .app-container.home-active .game-screen-scroll {
-            /* Оставляем 80px внизу для кнопок навигации */
-            padding-bottom: 80px !important;
-        }
-
-        .modal-back-button {
-            position: absolute; 
-            top: -14px;           
-            left: -5px;          
-            background: none;   
-            border: none;       
-            padding: 0;         
-            cursor: pointer;
-            z-index: 40;        
-            border-radius: 50%; 
-            transition: background-color 0.1s ease;
-            width: 88px;        /* <-- НОВОЕ ЗНАЧЕНИЕ (44 * 2) */
-            height: 88px;       /* <-- НОВОЕ ЗНАЧЕНИЕ (44 * 2) */
-            display: flex;      
-            justify-content: center; 
-            align-items: center;     
-        }
-
-        .modal-back-button img {
-            width: 64px; /* <-- НОВОЕ ЗНАЧЕНИЕ (32 * 2) */
-            height: 64px; /* <-- НОВОЕ ЗНАЧЕНИЕ (32 * 2) */
-            object-fit: contain; 
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)); 
-        }
-
-        .modal-back-button:active {
-            background-color: rgba(255, 255, 255, 0.1); /* Легкий фон при нажатии */
-        }
-        
-        /* Стилизация контейнера модального окна для position: relative */
-        .home-modal-content {
-            position: relative; /* Важно: кнопка абсолютного позиционирования будет отталкиваться от этого элемента */
-            /* ... (остальные стили, которые уже есть) ... */
-        }
-        /* --- КОНЕЦ СТИЛЕЙ КНОПКИ НАЗАД --- */
-
     </style>
 </head>
 <body>
@@ -1136,37 +695,9 @@
             autoBot: { id: 'autoBot', name: 'Белка-Робот', description: `Доход: +${BASE_BOT_RATE}/сек. Оффлайн работает не более 2ч.`, baseCost: 1000000, icon: 'images/icon_autotap_bot.png', type: 'once', maxLevel: 1 }
         };
 
-        // --- НОВЫЙ КАТАЛОГ УРОВНЕЙ СЕЙФА ---
-        // (Основан на вашей таблице. 0-й индекс = Уровень 1)
-        const VAULT_LEVELS = [
-            // Level 1 (index 0) - Базовый, бесплатный (как вы и просили)
-            { level: 1, capacity: 10000, cost: 0 },
-            // Level 2 (index 1) - Цена 20,000
-            { level: 2, capacity: 50000, cost: 20000 },
-            // Level 3 (index 2) - Цена 100,000
-            { level: 3, capacity: 250000, cost: 100000 },
-            // Level 4 (index 3) - Цена 400,000
-            { level: 4, capacity: 1000000, cost: 400000 },
-            // Level 5 (index 4) - Цена 2,000,000
-            { level: 5, capacity: 5000000, cost: 2000000 },
-            // Level 6 (index 5) - Цена 10,000,000
-            { level: 6, capacity: 25000000, cost: 10000000 },
-            // Level 7 (index 6) - Цена 40,000,000
-            { level: 7, capacity: 100000000, cost: 40000000 },
-            // Level 8 (index 7) - Цена 100,000,000
-            { level: 8, capacity: 250000000, cost: 100000000 },
-            // Level 9 (index 8) - Цена 200,000,000
-            { level: 9, capacity: 500000000, cost: 200000000 },
-            // Level 10 (index 9) - Цена 400,000,000
-            { level: 10, capacity: 1000000000, cost: 400000000 }
-        ];
-        const MAX_VAULT_LEVEL = 10;
-        // --- КОНЕЦ НОВОГО КАТАЛОГА ---
-
         const DEFENSE_CATALOG = {
             baseHp: { id: 'baseHp', name: 'Укрепить Стенки', description: 'Прочность Дупла +1000 HP', baseCost: 300, icon: 'images/icon_base_hp.png', type: 'level', emoji: '🧱' },
-            // --- ОБНОВЛЕНИЕ: Убираем старое описание и baseCost, добавляем maxLevel ---
-            vault: { id: 'vault', name: 'Увеличить Сейф', description: 'Увеличивает вместимость Сейфа', maxLevel: MAX_VAULT_LEVEL, icon: 'images/icon_vault.png', type: 'level', emoji: '💰' }
+            vault: { id: 'vault', name: 'Увеличить Сейф', description: 'Вместимость Сейфа +1000 $NUT', baseCost: 1000, icon: 'images/icon_vault.png', type: 'level', emoji: '💰' }
         };
         
         const TASK_CATALOG = {
@@ -1306,7 +837,7 @@
             energyLimit: 0, 
             energyRecharge: 0, 
             autoBot: 0,
-            baseHp: 1,
+            baseHp: 2,
             vault: 1
         };
         
@@ -1349,10 +880,6 @@
             const [taskLevels, setTaskLevels] = useState(defaultTaskLevels); 
             const [showTasksModal, setShowTasksModal] = useState(false);
             const [showTaskClaimModal, setShowTaskClaimModal] = useState(null);
-
-            const [vaultBalance, setVaultBalance] = useState(0);
-            // --- ИЗМЕНЕНИЕ: Ставим базовую вместимость из нового каталога ---
-            const [vaultCapacity, setVaultCapacity] = useState(VAULT_LEVELS[0].capacity); // 10,000
             
             const [levels, setLevels] = useState(defaultLevels);
             
@@ -1644,9 +1171,6 @@
                         setTotalGoldenNutsCaught(savedData.totalGoldenNutsCaught || 0);
                         setTotalSpent(savedData.totalSpent || 0);
                         setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
-                        setVaultBalance(savedData.vaultBalance || 0);
-                        // --- ИЗМЕНЕНИЕ: Ставим базовую вместимость при загрузке, если нет сохраненной ---
-                        setVaultCapacity(savedData.vaultCapacity || VAULT_LEVELS[0].capacity); // 10,000
 
                         if (savedData.levels.autoBot > 0) {
                             const maxOfflineTime = 7200; 
@@ -1778,8 +1302,6 @@
                                 totalGoldenNutsCaught,
                                 totalSpent,
                                 musicVolume,
-                                vaultBalance,
-                                vaultCapacity,
                                 lastOnlineTimestamp: Date.now()
                             };
                         // Мы следим за всеми этими переменными
@@ -2111,133 +1633,49 @@
                 
                 if (upgrade.type === 'once' && currentLevel > 0) {
                     alert('Этот буст уже куплен!');
-                    return false; // <-- ИЗМЕНЕНИЕ
+                    return;
                 }
                 
                 if (isMaxLevel) {
                      setShowUpgradeModal({ id: upgradeId, level: currentLevel, isMax: true });
-                     return false; // <-- ИЗМЕНЕНИЕ
+                     return;
                 }
 
                 const cost = upgrade.type === 'once' 
                     ? upgrade.baseCost 
                     : calculateCost(upgrade.baseCost, currentLevel, upgradeId);
                 
-                // --- НАЧАЛО ЗАМЕНЫ БЛОКА IF/ELSE ---
+                if (balance >= cost) {
+                    setBalance(balance - cost);
+                    setTotalSpent(s => s + cost);
+                    setLevels(prevLevels => ({
+                        ...prevLevels,
+                        [upgradeId]: upgrade.type === 'once' ? 1 : prevLevels[upgradeId] + 1
+                    }));
 
-                // --- НОВАЯ ЛОГИКА ДЛЯ СЕЙФА (VAULT) ---
-                if (upgradeId === 'vault') {
-                    // Уровень 1 (индекс 0) - бесплатный.
-                    // Уровень 2 (индекс 1) - это первая покупка.
-                    // Значит, нам нужны данные для УРОВНЯ (currentLevel), т.к. currentLevel - это ИНДЕКС
-                    
-                    // currentLevel = 1 (Уровень 1)
-                    // Мы покупаем Уровень 2, который находится в VAULT_LEVELS[1]
-                    const nextLevelData = VAULT_LEVELS[currentLevel]; 
-
-                    if (nextLevelData && balance >= nextLevelData.cost) {
-                        setBalance(balance - nextLevelData.cost);
-                        setTotalSpent(s => s + nextLevelData.cost);
-                        
-                        // Повышаем уровень в levels
-                        const newLevel = currentLevel + 1;
-                        setLevels(prevLevels => ({
-                            ...prevLevels,
-                            vault: newLevel 
-                        }));
-                        
-                        // Устанавливаем новую вместимость из каталога
-                        setVaultCapacity(nextLevelData.capacity);
-
-                        // Показываем модальное окно
-                        const reachedMax = newLevel === MAX_VAULT_LEVEL;
-                        setShowUpgradeModal({ id: upgradeId, level: newLevel, isMax: reachedMax });
-
-                        return true; // <-- ИЗМЕНЕНИЕ: Сигнал об успехе
-
-                    } else if (!nextLevelData) {
-                        // Этого не должно случиться, если isMaxLevel проверка работает
-                        console.error("Ошибка: Данные следующего уровня сейфа не найдены.");
-                        return false; // <-- ИЗМЕНЕНИЕ: Сигнал о неудаче
-                     }     
-                     else {
-                        alert('Недостаточно $NUT!');
-                        return false; // <-- ИЗМЕНЕНИЕ: Сигнал о неудаче
+                    if (upgradeId === 'autoBot' && upgrade.type === 'once') {
+                        setShowBotModal(true); 
+                    } else if (upgrade.type === 'level') {
+                         const newLevel = currentLevel + 1;
+                         const reachedMax = newLevel === upgrade.maxLevel;
+                         setShowUpgradeModal({ id: upgradeId, level: newLevel, isMax: reachedMax });
                     }
-                }
                     
-                // --- СТАРАЯ ЛОГИКА ДЛЯ ВСЕХ ОСТАЛЬНЫХ УЛУЧШЕНИЙ ---
-                 else {
-                    
-                    if (balance >= cost) {
-                        setBalance(balance - cost);
-                        setTotalSpent(s => s + cost);
-                        setLevels(prevLevels => ({
-                            ...prevLevels,
-                            [upgradeId]: upgrade.type === 'once' ? 1 : prevLevels[upgradeId] + 1
-                        }));
-
-                        if (upgradeId === 'autoBot' && upgrade.type === 'once') {
-                            setShowBotModal(true); 
-                        } else if (upgrade.type === 'level') {
-                            const newLevel = currentLevel + 1;
-                            const reachedMax = newLevel === upgrade.maxLevel;
-                            setShowUpgradeModal({ id: upgradeId, level: newLevel, isMax: reachedMax });
-                        }
-                        
-                        if (upgradeId === 'energyLimit') {
-                            // Обновление энергии при покупке лимита
-                            const oldMaxEnergy = BASE_ENERGY + currentLevel * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-                            const newMaxEnergy = BASE_ENERGY + (currentLevel + 1) * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
-                            const energyRatio = energy / oldMaxEnergy;
-                            setEnergy(Math.min(newMaxEnergy, Math.ceil(newMaxEnergy * energyRatio)));
-                        }
-                        
-                    } else {
-                        alert('Недостаточно $NUT!');
+                    if (upgradeId === 'energyLimit') {
+                        // Обновление энергии при покупке лимита
+                        const oldMaxEnergy = BASE_ENERGY + currentLevel * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                        const newMaxEnergy = BASE_ENERGY + (currentLevel + 1) * ENERGY_LIMIT_PER_LEVEL + permBonusLimit;
+                        const energyRatio = energy / oldMaxEnergy;
+                        setEnergy(Math.min(newMaxEnergy, Math.ceil(newMaxEnergy * energyRatio)));
                     }
+                    
+                } else {
+                    alert('Недостаточно $NUT!');
                 }
-                // --- КОНЕЦ ЗАМЕНЫ БЛОКА IF/ELSE ---
             };
 
             const handleVaultAction = (action, amount) => {
-                const numAmount = Number(amount);
-                if (numAmount <= 0) return;
-
-                if (action === 'deposit') {
-                    if (balance >= numAmount) {
-                        // Используем функциональное обновление для vaultBalance
-                        setVaultBalance(prevVaultBalance => { 
-                            const newVaultBalance = prevVaultBalance + numAmount;
-                            
-                            if (newVaultBalance <= vaultCapacity) { // vaultCapacity здесь актуален
-                                setBalance(b => b - numAmount);
-                                tg.HapticFeedback?.notificationOccurred('success');
-                                return newVaultBalance;
-                            } else {
-                                tg.HapticFeedback?.notificationOccurred('error');
-                                alert(`Сейф переполнен! Максимально можно внести: ${formatBalance(vaultCapacity - prevVaultBalance)} $NUT`);
-                                return prevVaultBalance; // Возвращаем старое значение
-                            }
-                        });
-                    } else {
-                         tg.HapticFeedback?.notificationOccurred('error');
-                         alert('Недостаточно $NUT на балансе!');
-                    }
-                } else if (action === 'withdraw') {
-                    // Используем функциональное обновление для vaultBalance
-                    setVaultBalance(prevVaultBalance => { 
-                        if (prevVaultBalance >= numAmount) {
-                            setBalance(b => b + numAmount);
-                            tg.HapticFeedback?.notificationOccurred('success');
-                            return prevVaultBalance - numAmount;
-                        } else {
-                            tg.HapticFeedback?.notificationOccurred('error');
-                            alert('Недостаточно $NUT в Сейфе!');
-                            return prevVaultBalance; // Возвращаем старое значение
-                        }
-                    });
-                }
+                // (Логика Сейфа остается заблокированной, т.к. вкладка 'home' заблокирована)
             };
             
             const handleClaimTask = (taskChainId) => {
@@ -2529,17 +1967,18 @@
                             </div>
                         );
                     // ...
-                    case 'home': // <--- ИСПРАВЛЕНИЕ: ПЕРЕДАЕМ РЕАЛЬНЫЕ СОСТОЯНИЯ
+                    case 'home': // <--- ДОБАВЛЕНО
                         return (
+                            // Используем скролл-контейнер, чтобы контент не был прижат
                             <div className="game-screen-scroll"> 
                                 <HomeScreen 
                                     levels={levels} 
                                     balance={balance} 
-                                    vaultBalance={vaultBalance} // <-- ИСПРАВЛЕНО
-                                    vaultCapacity={vaultCapacity} // <-- ИСПРАВЛЕНО
-                                    myBaseHp={calculateBaseHp(levels.baseHp)} // <-- ИСПРАВЛЕНО
-                                    onBuy={(id) => handleBuyUpgrade({...BOOST_CATALOG, ...DEFENSE_CATALOG}, id)} // <-- ИСПРАВЛЕНО
-                                    onVaultAction={handleVaultAction} // <-- ИСПРАВЛЕНО
+                                    vaultBalance={0} // Заглушка, если нет реального состояния
+                                    vaultCapacity={1000} // Заглушка
+                                    myBaseHp={1000} // Заглушка
+                                    onBuy={() => {}} // Заглушка
+                                    onVaultAction={() => {}} // Заглушка
                                 />
                             </div>
                         );
@@ -2564,13 +2003,8 @@
                         // Если данные загружены (isDataLoaded === true), 
                         // мы показываем игру, как и раньше.
                         // (ЭТО ВЕСЬ ТВОЙ СТАРЫЙ RETURN-БЛОК, СКОПИРОВАННЫЙ ОДИН В ОДИН)
-                        // Динамически добавляем класс 'home-active', если активна вкладка 'home'
-                        const appClass = activeTab === 'home' 
-                            ? "app-container home-active" 
-                            : "app-container";
-
                         return (
-                            <div className={appClass}>
+                            <div className="app-container">
                                 
                                 <Header 
                                     balance={balance} 
@@ -2649,26 +2083,23 @@
                                 )}
                                 
                                 {showOfflineModal && (
-                            <OfflineEarningsModal
-                                earnings={offlineEarnings}
-                                onClaim={() => {
-                                    setBalance(b => b + offlineEarnings);
-                                    setTotalEarned(t => t + offlineEarnings);
-                                    setShowOfflineModal(false);
-                                    setOfflineEarnings(0);
-                                }}
-                            />
-                        )}
+                                    <OfflineEarningsModal
+                                        earnings={offlineEarnings}
+                                        onClaim={() => {
+                                            setBalance(b => b + offlineEarnings);
+                                            setTotalEarned(t => t + offlineEarnings);
+                                            setShowOfflineModal(false);
+                                            setOfflineEarnings(0);
+                                        }}
+                                    />
+                                )}
 
-                        {/* --- ВОТ ИЗМЕНЕНИЕ --- */}
-                        {activeTab !== 'home' && activeTab !== 'boosts' && (
-                            <EnergyBar energy={energy} maxEnergy={maxEnergy} isInfinite={isInfiniteEnergy} />
-                        )}
-                        {/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */}
 
-                        <TabBar activeTab={activeTab} onTabClick={setActiveTab} />
-                    
-                    </div>
+                                <EnergyBar energy={energy} maxEnergy={maxEnergy} isInfinite={isInfiniteEnergy} />
+
+                                <TabBar activeTab={activeTab} onTabClick={setActiveTab} />
+                            
+                            </div>
                         );
                     } // <-- Конец функции App
 
@@ -3222,158 +2653,31 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
             );
         }
 
-        // --- НОВЫЙ КОМПОНЕНТ: Содержимое модального окна "Сейф" ---
-                function SafeManagementView({ vaultBalance, vaultCapacity, balance, onVaultAction, currentVaultLevel }) {
-                    const maxDeposit = Math.min(balance, vaultCapacity - vaultBalance);
-                    
-                    return (
-                        <div>
-                            {/* --- ИЗМЕНЕНИЕ: Динамическое изображение сейфа --- */}
-                            <img 
-                                src={`images/vault_image${currentVaultLevel}.png`} // <-- ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЙ ПУТЬ
-                                alt={`Сейф Уровень ${currentVaultLevel}`} 
-                                style={{
-                                    width: '80%', 
-                                    height: 'auto', 
-                                    display: 'block', 
-                                    margin: '0 auto 15px auto', 
-                                    borderRadius: '10px' 
-                                }} 
-                            />
-                            {/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */}
 
-                            <h3 className="home-modal-title">Управление Сейфом</h3>
-                            
-                            {/* 1. Плашка статуса (как в HomeVaultComponent) */}
-                            <div className="home-stat-plaque plaque-vault" style={{width: '100%', margin: '0 auto 20px auto'}}>                
-                                
-                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '5px'}}>
-                                    <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-                                        <img src="images/nut_icon.png" alt="$NUT" style={{width: '20px', height: '20px'}}/>
-                                        <span style={{fontSize: '1em', fontWeight: 'bold', color: 'white'}}>В Сейфе:</span>
-                                    </div>
-                                    <span style={{fontSize: '1em', fontWeight: 'bold', color: 'white'}}>
-                                        {formatBalance(vaultBalance)}/{formatBalance(vaultCapacity)} $NUT
-                                    </span>
-                                </div>
-                                <div className="stat-bar-container" style={{height: '12px'}}>
-                                    <div 
-                                        className="stat-bar-fill" 
-                                        style={{ 
-                                            width: `${(vaultBalance / vaultCapacity) * 100}%`, 
-                                            background: '#FFD700'
-                                        }}>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 2. Контроллы (Вложить/Забрать) */}
-                            <VaultControls 
-                                vaultBalance={vaultBalance}
-                                currentBalance={balance}
-                                maxDeposit={maxDeposit}
-                                onVaultAction={onVaultAction}
-                            />
-                        </div>
-                    );
-                }
-                
-                
-
-
-                function HomeScreen({ 
-                    levels, balance, myBaseHp, onBuy, 
-                    vaultBalance, vaultCapacity, onVaultAction
-                }) {
-                    
-                    const [viewMode, setViewMode] = useState('main'); // 'main', 'safe', 'defense'
-
-                    // --- ВОТ ЭТОТ КОД НУЖНО ДОБАВИТЬ ---
-                    const handleDefenseBuy = (upgradeId) => {
-                        // 1. Вызываем основную функцию покупки из App и получаем результат (true/false)
-                        const success = onBuy(upgradeId); 
-
-                        // 2. Если покупка прошла успешно И это был сейф
-                        if (success && upgradeId === 'vault') {
-                            // 3. Переключаем модальное окно на "Сейф"
-                            setViewMode('safe');
-                        }
-                        // 4. Если success = false, alert уже был показан, и мы остаемся в 'defense'
-                    };
-                    // --- КОНЕЦ НОВОГО КОДА ---
-            
+        function HomeScreen({ levels, balance, vaultBalance, vaultCapacity, myBaseHp, onBuy, onVaultAction }) {
+            // ВРЕМЕННЫЙ КОНТЕНТ:
             return (
-                <div className="game-screen-scroll">
-                    
-                    {/* --- ИЗМЕНЕНИЕ: Показываем HP и кнопки только в 'main' режиме --- */}
-                    {viewMode === 'main' && (
-                        <> {/* Обертка, чтобы вернуть оба элемента */}
-                            
-                            {/* 1. ЭЛЕМЕНТ HP */}
-                            <HomeHPComponent 
-                                myBaseHp={myBaseHp} 
-                                style={{ 
-                                    marginTop: '15px', 
-                                    zIndex: 5 
-                                }}
-                            />
-
-                            {/* 2. Кнопки навигации */}
-                            <div className="home-bottom-nav">
-                                <button className="home-nav-btn" onClick={() => setViewMode('safe')}>
-                                    <img src="images/icon_vault.png" alt="" style={{width: '18px', height: '18px', verticalAlign: 'middle', marginRight: '5px'}}/>
-                                    Открыть Сейф
-                                </button>
-                                <button className="home-nav-btn" onClick={() => setViewMode('defense')}>
-                                    <img src="images/icon_base_hp.png" alt="" style={{width: '18px', height: '18px', verticalAlign: 'middle', marginRight: '5px'}}/>
-                                    Улучшить Дупло
-                                </button>
-                            </div>
-
-                        </>
-                    )}
-                    {/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */}
-                    
-
-                    {/* Модальное окно (остается без изменений) */}
-                    {viewMode !== 'main' && (
-                        <div className="home-modal-overlay" onClick={() => setViewMode('main')}>
-                            <div className="home-modal-content" onClick={(e) => e.stopPropagation()}>
-                                
-                                <button 
-                                    className="modal-back-button" 
-                                    onClick={() => setViewMode('main')} 
-                                >
-                                    {/* Убедитесь, что здесь нет inline-стилей, или они правильные */}
-                                    <img src="images/arrow_back.png" alt="Назад" />
-                                </button>
-                                
-                                {viewMode === 'safe' && (
-                                    <SafeManagementView
-                                        vaultBalance={vaultBalance}
-                                        vaultCapacity={vaultCapacity}
-                                        balance={balance}
-                                        onVaultAction={onVaultAction}
-                                        currentVaultLevel={levels.vault} // <-- Это мы добавили в прошлый раз
-                                    />
-                                )}
-                                
-                                {viewMode === 'defense' && (
-                                    <DefenseUpgradeView
-                                        levels={levels}
-                                        balance={balance}
-                                        onBuy={handleDefenseBuy} // <-- ИЗМЕНЕНИЕ: используем новый обработчик
-                                    />
-                                )}
-                                
-                            </div>
+                // Используем класс для скролла, чтобы контент не был прижат
+                <div className="game-screen-scroll"> 
+                    <div className="upgrade-list">
+                        <div className="boost-header">
+                            <h2>🏠 Дупло (Защита)</h2>
                         </div>
-                    )}
-
+                        
+                        <div className="upgrade-item" style={{display: 'block', padding: '15px', textAlign: 'center'}}>
+                            <p style={{color: '#FFD700', fontWeight: 'bold', fontSize: '1.2em'}}>
+                                Сейф и Защита в Разработке
+                            </p>
+                            <p style={{color: '#ccc', fontSize: '0.9em', marginTop: '10px'}}>
+                                Здесь будут улучшения для защиты вашего Дупла от набегов и увеличения вместимости Сейфа.
+                            </p>
+                        </div>
+                        
+                    </div>
                 </div>
-            );    
+            );
         }
-
+        
         function RaidWrapper({ /* ... */ }) {
             return null;
         }
@@ -3595,7 +2899,9 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
             );
         }
 
-function UpgradeItem({ 
+
+        // (Строка ~1968)
+        function UpgradeItem({ 
             upgrade, level, cost, canAfford, onBuy, isMaxLevel,
             descriptionLabel, currentValue, nextValue, valueSuffix 
         }) {
@@ -3623,21 +2929,8 @@ function UpgradeItem({
                 isDisabled = !canAfford;
             }
 
-            // --- ИСПРАВЛЕНИЕ: Делаем formatValue "умнее" ---
-            const formatValue = (val) => {
-                // 1. Если это уже отформатированная строка (из "Дупла")
-                if (typeof val === 'string') {
-                    return val; // ...просто возвращаем ее
-                }
-                // 2. Если это число (из "Бустов")
-                if (typeof val === 'number') {
-                    // ...форматируем его, как и раньше
-                    return val.toFixed(1).replace(/\.0$/, '');
-                }
-                // 3. На всякий случай
-                return val;
-            };
-            // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+            const formatValue = (val) => val.toFixed(1).replace(/\.0$/, '');
+
             return (
                 <div className="upgrade-item">
                     <img src={upgrade.icon} alt={upgrade.name} />
@@ -3685,378 +2978,8 @@ function UpgradeItem({
                     </button>
                 </div>
             );
-        }  
-
-
-// --- НОВЫЙ КОМПОНЕНТ: Содержимое модального окна "Улучшения" (В СТИЛЕ БУСТОВ) ---
-        function DefenseUpgradeView({ levels, balance, onBuy }) {
-            
-            // Хелпер-функция для форматирования, т.к. мы не можем 
-            // использовать ту, что внутри <UpgradeItem>
-            const formatValueForDisplay = (val) => {
-                 // Для HP и Вместимости нам не нужны дробные числа
-                return Math.floor(val).toString();
-            };
-
-            return (
-                <div>
-                    <h3 className="home-modal-title">Улучшить Дупло</h3>
-                    
-                    {/* Используем тот же класс, что и в BoostsScreen */}
-                    <div className="upgrade-list" style={{paddingTop: '10px', paddingBottom: '10px'}}>
-                        
-                        {Object.values(DEFENSE_CATALOG).map(upgrade => {
-                            const upgradeId = upgrade.id;
-                            const currentLevel = levels[upgradeId];
-                            
-                            // 1. Общие переменные
-                            let isMaxLevel = false;
-                            let cost = 0;
-                            let canAfford = false;
-                            let descriptionLabel = "";
-                            let currentValue = 0;
-                            let nextValue = 0;
-                            let valueSuffix = "";
-
-                            // 2. Логика для "Укрепить Стенки" (baseHp)
-                            if (upgradeId === 'baseHp') {
-                                isMaxLevel = false; // У HP нет макс. уровня
-                                cost = calculateCost(upgrade.baseCost, currentLevel, upgradeId);
-                                canAfford = balance >= cost;
-
-                                descriptionLabel = "Прочность:";
-                                currentValue = calculateBaseHp(currentLevel); // Текущее HP
-                                nextValue = calculateBaseHp(currentLevel + 1); // Следующее HP
-                                valueSuffix = "HP";
-                            }
-                            
-                            // 3. Логика для "Увеличить Сейф" (vault)
-                            if (upgradeId === 'vault') {
-                                isMaxLevel = currentLevel >= MAX_VAULT_LEVEL;
-                                
-                                // Текущая вместимость (Ур 1 -> индекс 0)
-                                currentValue = VAULT_LEVELS[currentLevel - 1].capacity;
-                                valueSuffix = "$NUT Вмест.";
-                                descriptionLabel = "Вместимость:";
-
-                                if (isMaxLevel) {
-                                    canAfford = false;
-                                } else {
-                                    // Данные для СЛЕДУЮЩЕГО уровня (Ур 1 покупает Ур 2 -> индекс 1)
-                                    const nextLevelData = VAULT_LEVELS[currentLevel];
-                                    cost = nextLevelData.cost;
-                                    canAfford = balance >= cost;
-                                    nextValue = nextLevelData.capacity;
-                                }
-                            }
-
-                            // 4. Рендерим компонент <UpgradeItem> с собранными данными
-                            return (
-                                <UpgradeItem 
-                                    key={upgradeId}
-                                    upgrade={upgrade} 
-                                    level={currentLevel}
-                                    cost={cost}
-                                    canAfford={canAfford}
-                                    onBuy={() => onBuy(upgradeId)}
-                                    isMaxLevel={isMaxLevel}
-                                    descriptionLabel={descriptionLabel}
-                                    
-                                    // Важно: передаем отформатированные значения,
-                                    // т.к. UpgradeItem ожидает `toFixed(1)`, что нам не подходит
-                                    currentValue={formatValueForDisplay(currentValue)}
-                                    nextValue={formatValueForDisplay(nextValue)}
-                                    valueSuffix={valueSuffix}
-                                />
-                            );
-                        })}
-                        
-                    </div>
-                </div>
-            );
         }
-        // --- КОНЕЦ НОВОГО КОМПОНЕНТА ---    
-
-
-// --- НОВАЯ ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (Русская версия) ---
-        // Конвертирует "10к", "5млн", "2млрд" в числа
-        function parseAmountString(str) {
-            if (!str) return 0;
-
-            // 1. Убираем пробелы, приводим к нижнему регистру
-            let s = str.toLowerCase().trim();
-            
-            // 2. Заменяем запятую на точку для дробных чисел
-            s = s.replace(',', '.');
-
-            let multiplier = 1;
-            let numPart = s;
-
-            // 3. Ищем суффиксы в порядке от длинного к короткому
-            if (s.endsWith('млрд')) {
-                multiplier = 1000000000;
-                numPart = s.substring(0, s.length - 4); // убираем "млрд"
-            } else if (s.endsWith('млн')) {
-                multiplier = 1000000;
-                numPart = s.substring(0, s.length - 3); // убираем "млн"
-            } else if (s.endsWith('к')) {
-                multiplier = 1000;
-                numPart = s.substring(0, s.length - 1); // убираем "к"
-            }
-
-            // 4. Превращаем оставшуюся часть в число
-            const num = parseFloat(numPart);
-
-            // 5. Если это не число (например, "abc"), возвращаем 0
-            if (isNaN(num)) {
-                return 0;
-            }
-
-            // 6. Умножаем число на множитель
-            return Math.floor(num * multiplier);
-        }
-        // --- КОНЕЦ ВСПОМОГАТЕЛЬНОЙ ФУНКЦИИ ---
-
-
-function VaultControls({ vaultBalance, currentBalance, maxDeposit, onVaultAction }) {
-            
-            const [amount, setAmount] = useState('');
-
-            // Обработчик для кнопок (Вложить/Забрать)
-            const handleAction = (action) => {
-                
-                // 1. Конвертируем "10к", "5млн" в число
-                const numAmount = parseAmountString(amount); // <-- Используем нашу новую функцию
-
-                // 2. Проверка, что введено корректное число
-                if (!numAmount || numAmount <= 0) {
-                    alert('Введите корректную сумму');
-                    setAmount(''); // Сбрасываем некорректный ввод
-                    return;
-                }
-                
-                // 3. Вызываем родительский обработчик
-                onVaultAction(action, numAmount);
-                
-                // 4. Очищаем поле после успешного действия
-                setAmount('');
-            };
-
-            // Обработчик для поля ввода (теперь разрешает русские буквы)
-            const handleAmountChange = (e) => {
-                const value = e.target.value;
-                
-                // --- ИЗМЕНЕНИЕ: Разрешаем цифры, точку/запятую и буквы к,м,л,н,р,д ---
-                if (/^[\d.,кмлнрд]*$/i.test(value)) { 
-                    setAmount(value); // Просто устанавливаем значение
-                }
-            };
-            
-            // Проверяем, введено ли число > 0, чтобы активировать кнопки
-            // Мы должны проверить это *после* парсинга
-            const isAmountEntered = parseAmountString(amount) > 0;
-            
-            return (
-                <div className="vault-controls">
-                    
-                    {/* Поле для ввода */}
-                    <input 
-                        type="text"
-                        // inputMode="numeric" <-- Убираем, т.к. нам нужна буквенная клавиатура
-                        placeholder="Введите сумму (10к, 5млн)" 
-                        value={amount}
-                        onChange={handleAmountChange} // Наш JS-фильтр
-                        style={{
-                            width: '90%',
-                            padding: '12px',
-                            margin: '0 auto 15px auto',
-                            display: 'block',
-                            borderRadius: '8px',
-                            border: '2px solid #a37b4f',
-                            background: '#5d4a36',
-                            color: 'white',
-                            fontSize: '1.1em',
-                            textAlign: 'center',
-                            boxSizing: 'border-box'
-                        }}
-                    />
-
-                    {/* 1. Кнопки Вложить/Забрать */}
-                    <div className="vault-controls-btn-container">
-                        <button 
-                            className="buy-btn" 
-                            style={{backgroundColor: isAmountEntered ? '#4CAF50' : '#555', color: 'white'}}
-                            disabled={!isAmountEntered}
-                            onClick={() => handleAction('deposit')}
-                        >
-                            Вложить
-                        </button>
-                        <button 
-                            className="buy-btn" 
-                            style={{backgroundColor: isAmountEntered ? '#E53935' : '#555', color: 'white'}}
-                            disabled={!isAmountEntered}
-                            onClick={() => handleAction('withdraw')}
-                        >
-                            Забрать
-                        </button>
-                    </div>
-                    
-                    {/* 2. Подпись (теперь показывает баланс) */}
-                    <p style={{fontSize: '0.9em', color: '#ccc', margin: '15px 0 0 0', textAlign: 'center'}}>
-                        На балансе: {formatBalance(currentBalance)} $NUT
-                    </p>
-                </div>
-            );
-        }
-
-// --- НОВЫЙ КОМПОНЕНТ: Карточка Улучшения (Полностью Переписан) ---
-function DefenseCard({ upgrade, level, balance, onBuy }) {
-    
-    // --- ЛОГИКА ДЛЯ УЛУЧШЕНИЯ "Увеличить Сейф" (VAULT) ---
-    if (upgrade.id === 'vault') {
-        const currentLevel = level; // Текущий уровень (e.g., 1)
-        const isMaxLevel = currentLevel >= MAX_VAULT_LEVEL;
-
-        let cost = 0;
-        let canAfford = false;
-        let buttonText = 'МАКС.';
-        let buttonClass = 'max';
-        let isDisabled = true;
-        let label = `Ур. ${currentLevel}`;
-        // Показываем текущую вместимость (Ур 1 -> VAULT_LEVELS[0])
-        let effectText = `Вмест: ${formatBalance(VAULT_LEVELS[currentLevel - 1].capacity)}`; 
-
-        if (isMaxLevel) {
-            // Уже на макс. уровне, ничего не меняем
-        } else {
-            // Получаем данные для СЛЕДУЮЩЕГО уровня
-            // currentLevel = 1, нужен VAULT_LEVELS[1] (Уровень 2)
-            const nextLevelData = VAULT_LEVELS[currentLevel]; 
-            
-            cost = nextLevelData.cost;
-            canAfford = balance >= cost;
-            buttonText = `${formatBalance(cost)} $NUT`;
-            isDisabled = !canAfford;
-            buttonClass = isDisabled ? 'disabled' : '';
-            
-            // Текст для карточки
-            label = `Ур. ${nextLevelData.level}`; // Ур. 2
-            effectText = `-> ${formatBalance(nextLevelData.capacity)} Вмест.`; // -> 50K Вмест.
-        }
-
-        return (
-            <div 
-                className={`defense-card ${isDisabled ? 'disabled' : ''}`}
-                onClick={!isDisabled ? onBuy : null}
-                style={{cursor: !isDisabled ? 'pointer' : 'default'}}
-            >
-                <div className="defense-card-icon">
-                    <img src={upgrade.icon} alt={upgrade.name} /> 
-                </div>
-                <h5>{upgrade.name}</h5>
-                <div className="level">
-                    {label} ({effectText}) 
-                </div>
-                <button 
-                    className={`defense-card-cost ${buttonClass}`}
-                    disabled={isDisabled}
-                >
-                    {buttonText}
-                </button>
-            </div>
-        );
-    }
-    
-    // --- СТАРАЯ ЛОГИКА ДЛЯ УЛУЧШЕНИЯ "Укрепить Стенки" (BASEHP) ---
-    // (Этот код остался без изменений, он работает как раньше)
-    const currentLevel = level;
-    const isMaxLevel = false; // У HP нет макс. уровня
-    
-    const cost = calculateCost(upgrade.baseCost, currentLevel, upgrade.id);
-    const canAfford = balance >= cost;
-    
-    let buttonText = `${formatBalance(cost)} $NUT`;
-    let buttonClass = '';
-    let isDisabled = !canAfford;
-
-    if (!canAfford) {
-        buttonClass = 'disabled';
-    }
-    
-    let label = `Ур. ${currentLevel + 1}`;
-    let effectText = `+${calculateBaseHp(currentLevel + 1) - calculateBaseHp(currentLevel)} HP`;
-
-    return (
-        <div 
-            className={`defense-card ${isDisabled ? 'disabled' : ''}`}
-            onClick={!isDisabled ? onBuy : null}
-            style={{cursor: !isDisabled ? 'pointer' : 'default'}}
-        >
-            <div className="defense-card-icon">
-                <img src={upgrade.icon} alt={upgrade.name} /> 
-            </div>
-            <h5>{upgrade.name}</h5>
-            <div className="level">
-                {label} ({effectText}) 
-            </div>
-            <button 
-                className={`defense-card-cost ${buttonClass}`}
-                disabled={isDisabled}
-            >
-                {buttonText}
-            </button>
-        </div>
-    );
-}
-// --- КОНЕЦ ЗАМЕНЫ КОМПОНЕНТА ---
-
-// --- НОВЫЙ КОМПОНЕНТ: HP-плашка (HomeHPComponent) ---
-function HomeHPComponent({ myBaseHp, style }) { // <-- ТЕПЕРЬ ПРИНИМАЕТ ПРОПС 'style'
-    
-    // Определяем базовые стили
-    const baseStyle = {
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        zIndex: 5,
-    };
-    
-    // Объединяем базовые стили с переданными стилями (style)
-    const finalStyle = {...baseStyle, ...style}; 
-
-    return (
-        <div 
-            className="hp-plaque-compact" 
-            style={finalStyle} // <-- ПРИМЕНЯЕМ ОБЪЕДИНЕННЫЕ СТИЛИ
-        >
-            <img src="images/icon_shield.png" alt="HP" style={{width: '20px', height: '20px', marginRight: '4px'}}/> 
-            {formatBalance(myBaseHp)} HP
-        </div>
-    );
-}
-
-
-// --- НОВЫЙ КОМПОНЕНТ: Наложение HP Дупла ---
-function DuploHPOverlay({ myBaseHp }) {
-    return (
-        <div style={{
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            color: '#4CAF50', 
-            fontSize: '1.2em', 
-            fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
-            
-            /* --- ПОДЪЕМ: Используем отрицательный отступ --- */
-            marginTop: '-25px', 
-            zIndex: 5 /* Убедимся, что находится поверх других элементов */
-        }}>
-            <img src="images/icon_shield.png" alt="HP" style={{width: '25px', height: '25px', marginRight: '4px'}} /> 
-            {formatBalance(myBaseHp)} HP
-        </div>
-    );
-}
+        
         
         // Старт Приложения
         const root = ReactDOM.createRoot(document.getElementById('root'));

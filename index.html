@@ -1954,7 +1954,9 @@
                                 className="forest-content" 
                                 onClick={handleTap} 
                                 onTouchStart={handleTouchStart} 
-                            <ForestScreen 
+                            > {/* <--- ВОТ ЭТА СКОБКА БЫЛА ПОТЕРЯНА */}
+                            
+                                <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
                                     completedTasks={completedTaskCount}
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
@@ -1962,7 +1964,7 @@
                                     onSettingsClick={() => setShowSettingsModal(true)}
                                     isSquirrelActive={isSquirrelActive}
                                     
-                                    onAdClick={() => setShowAdConfirmation(true)}  // <-- ВСТАВИЛИ СЮДА
+                                    onAdClick={() => setShowAdConfirmation(true)} 
                                 />
                                 
                                 {activeBonuses.length > 0 && (

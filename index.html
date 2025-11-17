@@ -617,6 +617,9 @@
         /* --- КОНЕЦ MEDIA QUERY --- */
 
     </style>
+
+    <script src='//libtl.com/sdk.js' data-zone='10186694' data-sdk='show_10186694'></script>
+
 </head>
 <body>
 
@@ -909,6 +912,10 @@
 
             const [playerPhotoUrl, setPlayerPhotoUrl] = useState(null); // Дефолтный аватар
             
+            // В начале function App():
+            const [dailyAdsCount, setDailyAdsCount] = useState(0); // Сколько раз посмотрел сегодня
+            const [lastAdDateStr, setLastAdDateStr] = useState(''); // Какого числа смотрел последний раз
+            const [showAdConfirmation, setShowAdConfirmation] = useState(false); // Модалка подтверждения
             
             // --- РАСЧЕТЫ БОНУСОВ ---
             let tapMultiplier = 1;
@@ -1172,6 +1179,20 @@
                         setTotalSpent(savedData.totalSpent || 0);
                         setMusicVolume(savedData.musicVolume !== undefined ? savedData.musicVolume : 50);
 
+                        // --- ЗАГРУЗКА ДАННЫХ РЕКЛАМЫ (ВСТАВИТЬ СЮДА) ---
+                        const savedAdsCount = savedData.dailyAdsCount || 0;
+                        const savedAdDate = savedData.lastAdDateStr || new Date().toDateString();
+                        
+                        // Если дата сменилась - сбрасываем, если нет - загружаем
+                        if (savedAdDate !== new Date().toDateString()) {
+                            setDailyAdsCount(0);
+                            setLastAdDateStr(new Date().toDateString());
+                        } else {
+                            setDailyAdsCount(savedAdsCount);
+                            setLastAdDateStr(savedAdDate);
+                        }
+                        // -----------------------------------------------
+
                         if (savedData.levels.autoBot > 0) {
                             const maxOfflineTime = 7200; 
                             const effectiveTime = Math.min(timeDiffSeconds, maxOfflineTime);
@@ -1302,10 +1323,12 @@
                                 totalGoldenNutsCaught,
                                 totalSpent,
                                 musicVolume,
-                                lastOnlineTimestamp: Date.now()
+                                lastOnlineTimestamp: Date.now(),
+                                dailyAdsCount, 
+                                lastAdDateStr  
                             };
                         // Мы следим за всеми этими переменными
-                        }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, musicVolume]); 
+                        }, [balance, energy, levels, taskLevels, dailyRewardsState, totalTaps, totalEarned, musicVolume, dailyAdsCount]); 
 
                         // 3. Этот useEffect запускает ТАЙМЕР, который срабатывает каждые 5 секунд
                         useEffect(() => {
@@ -1862,6 +1885,55 @@
                 }
             };
 
+            // --- ВСТАВЛЯЕМ НОВУЮ ФУНКЦИЮ СЮДА ---
+            // ==================================================
+            const handleWatchAd = () => {
+                setShowAdConfirmation(false); // Закрываем окно подтверждения
+
+                // 1. Проверка лимита (100 раз в день)
+                const todayStr = new Date().toDateString();
+                
+                if (lastAdDateStr !== todayStr) {
+                    setDailyAdsCount(0);
+                    setLastAdDateStr(todayStr);
+                } else if (dailyAdsCount >= 100) {
+                    alert("Лимит просмотров на сегодня исчерпан. Возвращайтесь завтра!");
+                    return;
+                }
+
+                console.log("Попытка показать рекламу Monetag...");
+
+                // 2. Вызов SDK Monetag (ТВОЙ КОД)
+                if (typeof window.show_10186694 === 'function') {
+                    
+                    window.show_10186694().then(() => {
+                        // === НАГРАДА ===
+                        const REWARD = 5000;
+                        
+                        setBalance(b => b + REWARD);
+                        setTotalEarned(t => t + REWARD);
+                        
+                        setDailyAdsCount(prev => prev + 1);
+                        setLastAdDateStr(new Date().toDateString());
+
+                        setShowBonusModal({
+                            type: 'instant',
+                            icon: '🎬',
+                            title: 'Реклама просмотрена!',
+                            message: `Вы получили +${formatBalance(REWARD)} $NUT! (Сегодня: ${dailyAdsCount + 1}/100)`,
+                            buttonText: 'Круто!',
+                            bonusData: null
+                        });
+
+                    }).catch((e) => {
+                        console.warn("Реклама закрыта или ошибка:", e);
+                    });
+
+                } else {
+                    alert("Реклама еще загружается. Подождите пару секунд.");
+                }
+            };
+
             
             const startRaid = () => { /* ... */ };
             const handleRaidTap = () => { /* ... */ };
@@ -1882,14 +1954,15 @@
                                 className="forest-content" 
                                 onClick={handleTap} 
                                 onTouchStart={handleTouchStart} 
-                            >
-                                <ForestScreen 
+                            <ForestScreen 
                                     onTasksClick={() => setShowTasksModal(true)} 
                                     completedTasks={completedTaskCount}
                                     onDailyRewardClick={() => setShowDailyRewardsModal(true)}
                                     isDailyRewardAvailable={isDailyRewardAvailable}
                                     onSettingsClick={() => setShowSettingsModal(true)}
-                                    isSquirrelActive={isSquirrelActive} 
+                                    isSquirrelActive={isSquirrelActive}
+                                    
+                                    onAdClick={() => setShowAdConfirmation(true)}  // <-- ВСТАВИЛИ СЮДА
                                 />
                                 
                                 {activeBonuses.length > 0 && (
@@ -2091,6 +2164,14 @@
                                             setShowOfflineModal(false);
                                             setOfflineEarnings(0);
                                         }}
+                                    />
+                                )}
+
+                                {showAdConfirmation && (
+                                    <AdConfirmationModal 
+                                        onClose={() => setShowAdConfirmation(false)}
+                                        onWatch={handleWatchAd}
+                                        dailyCount={dailyAdsCount}
                                     />
                                 )}
 
@@ -2530,7 +2611,8 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
         
         function ForestScreen({ 
             onTasksClick, completedTasks, onDailyRewardClick, isDailyRewardAvailable, onSettingsClick,
-            isSquirrelActive // <-- ИЗМЕНЕНО: Добавляем пропс
+            isSquirrelActive, 
+            onAdClick // <-- ДОБАВИЛИ ВОТ ЭТО
         }) {
             
             // ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТСУТСТВИЯ ИЗОБРАЖЕНИЯ (FOLBACK)
@@ -2585,6 +2667,22 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
                            onError={(e) => handleImageError(e, '⚙️')}
                         />
                     </button>
+
+                    {/* --- НОВАЯ КНОПКА РЕКЛАМЫ --- */}
+                                <button 
+                                    className="settings-button" 
+                                    style={{ top: '75px', left: '15px' }} 
+                                    onClick={onAdClick}
+                                >
+                                    <span style={{fontSize: '1.8em'}}>🎬</span>
+                                    <div style={{
+                                        position: 'absolute', bottom: '-5px', left: '50%', transform: 'translateX(-50%)', 
+                                        background: '#4CAF50', color: 'white', fontSize: '0.55em', padding: '1px 3px', 
+                                        borderRadius: '4px', fontWeight: 'bold', whiteSpace: 'nowrap'
+                                    }}>
+                                        +5000
+                                    </div>
+                                </button>
                 </div>
             );
         }
@@ -2980,6 +3078,41 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
             );
         }
         
+        // --- КОМПОНЕНТ ОКНА ПОДТВЕРЖДЕНИЯ РЕКЛАМЫ ---
+        function AdConfirmationModal({ onClose, onWatch, dailyCount }) {
+            const limit = 100;
+            const left = limit - dailyCount;
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="app-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="icon bot-icon">🎬</div>
+                        <h3 className="max-level">Бесплатные $NUT</h3>
+                        <p>
+                            Посмотрите короткую рекламу и получите <b style={{color:'#4CAF50'}}>+5 000 $NUT</b>!
+                        </p>
+                        <p style={{fontSize: '0.9em', color: '#aaa', marginTop: '10px'}}>
+                            Доступно сегодня: {left} из {limit}
+                        </p>
+                        
+                        <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px'}}>
+                            <button className="buy-btn" style={{backgroundColor: '#555'}} onClick={onClose}>
+                                Позже
+                            </button>
+                            {left > 0 ? (
+                                <button className="buy-btn" onClick={onWatch}>
+                                    Смотреть (+5k)
+                                </button>
+                            ) : (
+                                 <button className="buy-btn" disabled style={{backgroundColor: '#333'}}>
+                                    Лимит исчерпан
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         
         // Старт Приложения
         const root = ReactDOM.createRoot(document.getElementById('root'));

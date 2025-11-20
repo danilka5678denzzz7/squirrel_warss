@@ -618,7 +618,7 @@
 
     </style>
 
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='10186694' data-sdk='show_10186694'></script>
 
 </head>
 <body>
@@ -917,6 +917,8 @@
             const [lastAdDateStr, setLastAdDateStr] = useState(''); // Какого числа смотрел последний раз
             const [showAdConfirmation, setShowAdConfirmation] = useState(false); // Модалка подтверждения
             
+            const [adCooldownEnd, setAdCooldownEnd] = useState(0); // Время, когда закончится таймер
+
             // --- РАСЧЕТЫ БОНУСОВ ---
             let tapMultiplier = 1;
             let doubleIncomeMultiplier = 1;
@@ -1886,31 +1888,31 @@
             };
 
             const handleWatchAd = () => {
-                setShowAdConfirmation(false); // Закрываем окно подтверждения
-
-                // 1. Проверка лимита (15 раз в день)
-                const todayStr = new Date().toDateString();
-                
-                if (lastAdDateStr !== todayStr) {
-                    setDailyAdsCount(0);
-                    setLastAdDateStr(todayStr);
-                } else if (dailyAdsCount >= 15) { 
-                    alert("Лимит просмотров на сегодня исчерпан. Возвращайтесь завтра!");
+                // 1. Проверяем, не идет ли таймер прямо сейчас (на всякий случай)
+                if (Date.now() < adCooldownEnd) {
+                    alert("Подождите, таймер еще не прошел!");
                     return;
                 }
 
-                console.log("Попытка показать рекламу Adsgram...");
+                // Мы НЕ закрываем окно setShowAdConfirmation(false) сразу, 
+                // чтобы пользователь увидел таймер на кнопке после просмотра.
+                // Но если хочешь закрывать — раскомментируй строку ниже:
+                // setShowAdConfirmation(false); 
 
-                // 2. Вызов SDK Adsgram (ID: 17924)
-                if (window.Adsgram) {
-                    // Инициализируем блок
-                    const AdController = window.Adsgram.init({ blockId: "17924" });
+                // 2. Сброс счетчика дней (просто для статистики, лимита больше нет)
+                const todayStr = new Date().toDateString();
+                if (lastAdDateStr !== todayStr) {
+                    setDailyAdsCount(0);
+                    setLastAdDateStr(todayStr);
+                }
+                
+                // УБРАЛИ ПРОВЕРКУ ЛИМИТА (dailyAdsCount >= 15)
 
-                    // Показываем рекламу
-                    AdController.show().then((result) => {
-                        // Пользователь досмотрел рекламу
-                        console.log("Реклама успешно просмотрена:", result);
+                console.log("Попытка показать рекламу Monetag...");
 
+                if (typeof window.show_10186694 === 'function') {
+                    
+                    window.show_10186694().then(() => {
                         // === НАГРАДА ===
                         const REWARD = 5000;
                         
@@ -1920,24 +1922,29 @@
                         setDailyAdsCount(prev => prev + 1);
                         setLastAdDateStr(new Date().toDateString());
 
+                        // --- ЗАПУСКАЕМ ТАЙМЕР 30 СЕКУНД ---
+                        setAdCooldownEnd(Date.now() + 30000); 
+                        // ----------------------------------
+
+                        // Закрываем окно подтверждения, чтобы показать окно успеха
+                        setShowAdConfirmation(false);
+
                         setShowBonusModal({
                             type: 'instant',
                             icon: '🎬',
                             title: 'Реклама просмотрена!',
-                            message: `Вы получили +${formatBalance(REWARD)} $NUT! (Сегодня: ${dailyAdsCount + 1}/15)`,
+                            message: `Вы получили +${formatBalance(REWARD)} $NUT! (Всего сегодня: ${dailyAdsCount + 1})`,
                             buttonText: 'Круто!',
                             bonusData: null
                         });
 
-                    }).catch((result) => {
-                        // Ошибка или пользователь пропустил рекламу
-                        console.warn("Реклама пропущена или ошибка:", result);
-                        // Здесь можно добавить уведомление, если нужно
-                        // alert("Вы не досмотрели рекламу до конца.");
+                    }).catch((e) => {
+                        console.warn("Реклама закрыта или ошибка:", e);
+                        // Если ошибка или закрыл рано — таймер НЕ ставим
                     });
 
                 } else {
-                    alert("Реклама еще загружается. Подождите пару секунд или проверьте интернет.");
+                    alert("Реклама еще загружается. Подождите пару секунд.");
                 }
             };
 
@@ -2181,6 +2188,7 @@
                                         onClose={() => setShowAdConfirmation(false)}
                                         onWatch={handleWatchAd}
                                         dailyCount={dailyAdsCount}
+                                        cooldownEnd={adCooldownEnd} 
                                     />
                                 )}
 
@@ -3087,10 +3095,24 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
             );
         }
         
-        // --- КОМПОНЕНТ ОКНА ПОДТВЕРЖДЕНИЯ РЕКЛАМЫ ---
-        function AdConfirmationModal({ onClose, onWatch, dailyCount }) {
-            const limit = 15; // <--- Поменяли здесь
-            const left = limit - dailyCount;
+        function AdConfirmationModal({ onClose, onWatch, dailyCount, cooldownEnd }) {
+            const [timeLeft, setTimeLeft] = useState(0);
+
+            useEffect(() => {
+                // Функция обновления таймера
+                const updateTimer = () => {
+                    const now = Date.now();
+                    const diff = Math.ceil((cooldownEnd - now) / 1000);
+                    setTimeLeft(diff > 0 ? diff : 0);
+                };
+
+                updateTimer(); // Запустить сразу
+                const interval = setInterval(updateTimer, 1000); // Обновлять каждую секунду
+
+                return () => clearInterval(interval);
+            }, [cooldownEnd]);
+
+            const isCooldownActive = timeLeft > 0;
 
             return (
                 <div className="modal-overlay" onClick={onClose}>
@@ -3101,22 +3123,27 @@ function DailyRewardsModal({ onClose, rewardsCatalog, currentState, isAvailable,
                             Посмотрите короткую рекламу и получите <b style={{color:'#4CAF50'}}>+5 000 $NUT</b>!
                         </p>
                         <p style={{fontSize: '0.9em', color: '#aaa', marginTop: '10px'}}>
-                            Доступно сегодня: {left} из {limit}
+                            Вы посмотрели сегодня: {dailyCount} раз(а)
                         </p>
                         
                         <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px'}}>
                             <button className="buy-btn" style={{backgroundColor: '#555'}} onClick={onClose}>
                                 Позже
                             </button>
-                            {left > 0 ? (
-                                <button className="buy-btn" onClick={onWatch}>
-                                    Смотреть (+5k)
-                                </button>
-                            ) : (
-                                 <button className="buy-btn" disabled style={{backgroundColor: '#333'}}>
-                                    Лимит исчерпан
-                                </button>
-                            )}
+                            
+                            {/* Кнопка меняется в зависимости от таймера */}
+                            <button 
+                                className="buy-btn" 
+                                onClick={onWatch} 
+                                disabled={isCooldownActive}
+                                style={{
+                                    backgroundColor: isCooldownActive ? '#333' : '#4CAF50',
+                                    cursor: isCooldownActive ? 'not-allowed' : 'pointer',
+                                    minWidth: '140px' // Чтобы кнопка не прыгала в размере
+                                }}
+                            >
+                                {isCooldownActive ? `Ждите ${timeLeft}с` : 'Смотреть (+5k)'}
+                            </button>
                         </div>
                     </div>
                 </div>

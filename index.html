@@ -618,7 +618,7 @@
 
     </style>
 
-    <script src='//libtl.com/sdk.js' data-zone='10186694' data-sdk='show_10186694'></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
 </head>
 <body>
@@ -1885,28 +1885,32 @@
                 }
             };
 
-            // --- ВСТАВЛЯЕМ НОВУЮ ФУНКЦИЮ СЮДА ---
-            // ==================================================
             const handleWatchAd = () => {
                 setShowAdConfirmation(false); // Закрываем окно подтверждения
 
-                // 1. Проверка лимита (100 раз в день)
+                // 1. Проверка лимита (15 раз в день)
                 const todayStr = new Date().toDateString();
                 
                 if (lastAdDateStr !== todayStr) {
                     setDailyAdsCount(0);
                     setLastAdDateStr(todayStr);
-                } else if (dailyAdsCount >= 15) { // <--- Поменяли здесь
+                } else if (dailyAdsCount >= 15) { 
                     alert("Лимит просмотров на сегодня исчерпан. Возвращайтесь завтра!");
                     return;
                 }
 
-                console.log("Попытка показать рекламу Monetag...");
+                console.log("Попытка показать рекламу Adsgram...");
 
-                // 2. Вызов SDK Monetag (ТВОЙ КОД)
-                if (typeof window.show_10186694 === 'function') {
-                    
-                    window.show_10186694().then(() => {
+                // 2. Вызов SDK Adsgram (ID: 17924)
+                if (window.Adsgram) {
+                    // Инициализируем блок
+                    const AdController = window.Adsgram.init({ blockId: "17924" });
+
+                    // Показываем рекламу
+                    AdController.show().then((result) => {
+                        // Пользователь досмотрел рекламу
+                        console.log("Реклама успешно просмотрена:", result);
+
                         // === НАГРАДА ===
                         const REWARD = 5000;
                         
@@ -1925,12 +1929,15 @@
                             bonusData: null
                         });
 
-                    }).catch((e) => {
-                        console.warn("Реклама закрыта или ошибка:", e);
+                    }).catch((result) => {
+                        // Ошибка или пользователь пропустил рекламу
+                        console.warn("Реклама пропущена или ошибка:", result);
+                        // Здесь можно добавить уведомление, если нужно
+                        // alert("Вы не досмотрели рекламу до конца.");
                     });
 
                 } else {
-                    alert("Реклама еще загружается. Подождите пару секунд.");
+                    alert("Реклама еще загружается. Подождите пару секунд или проверьте интернет.");
                 }
             };
 

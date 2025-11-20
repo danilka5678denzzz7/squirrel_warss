@@ -813,6 +813,7 @@
             return 1000 + level * 1000;
         };
 
+        
         const formatBalance = (num) => {
              if (num >= 1000000000) {
                 return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + ' млрд';
@@ -1919,7 +1920,7 @@
                         setLastAdDateStr(new Date().toDateString());
                         
                         // Запуск таймера
-                        setAdCooldownEnd(Date.now() + 30000);
+                        setAdCooldownEnd(Date.now() + 15000);
                         setShowAdConfirmation(false);
 
                         setShowBonusModal({

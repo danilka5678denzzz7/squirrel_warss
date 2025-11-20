@@ -1888,68 +1888,65 @@
             };
 
             const handleWatchAd = () => {
-                // 1. Проверяем таймер
+                // 1. Проверка таймера
                 if (Date.now() < adCooldownEnd) {
-                    // На всякий случай, хотя кнопка и так должна быть отключена
+                    const timeLeft = Math.ceil((adCooldownEnd - Date.now()) / 1000);
+                    alert(`Подождите еще ${timeLeft} сек.`);
                     return;
                 }
 
-                // Сброс счетчика дней (для статистики)
+                // Сброс статистики
                 const todayStr = new Date().toDateString();
                 if (lastAdDateStr !== todayStr) {
                     setDailyAdsCount(0);
                     setLastAdDateStr(todayStr);
                 }
 
-                console.log("Попытка показать рекламу Adsgram...");
+                // 2. Проверяем, загружен ли скрипт
+                if (!window.Adsgram) {
+                    alert("ОШИБКА: Скрипт Adsgram не найден! Проверьте <head>.");
+                    return;
+                }
 
-                // 2. Проверяем, загрузился ли Adsgram
-                if (window.Adsgram) {
-                    // Инициализируем блок с твоим ID 17924
+                // 3. Попытка показать
+                try {
                     const AdController = window.Adsgram.init({ blockId: "17924" });
 
-                    // Показываем рекламу
                     AdController.show().then((result) => {
-                        // --- УСПЕХ (Пользователь досмотрел рекламу) ---
-                        console.log("Реклама просмотрена:", result);
-
+                        // --- УСПЕХ ---
                         const REWARD = 5000;
-                        
                         setBalance(b => b + REWARD);
                         setTotalEarned(t => t + REWARD);
-                        
                         setDailyAdsCount(prev => prev + 1);
                         setLastAdDateStr(new Date().toDateString());
-
-                        // --- ЗАПУСКАЕМ ТАЙМЕР 30 СЕКУНД ---
-                        setAdCooldownEnd(Date.now() + 30000); 
-                        // ----------------------------------
-
-                        // Закрываем окно подтверждения
+                        
+                        // Запуск таймера
+                        setAdCooldownEnd(Date.now() + 30000);
                         setShowAdConfirmation(false);
 
-                        // Показываем уведомление о награде
                         setShowBonusModal({
-                            type: 'instant',
-                            icon: '🎬',
-                            title: 'Реклама просмотрена!',
-                            message: `Вы получили +${formatBalance(REWARD)} $NUT! (Всего сегодня: ${dailyAdsCount + 1})`,
-                            buttonText: 'Круто!',
-                            bonusData: null
+                            type: 'instant', icon: '🎬', title: 'Реклама просмотрена!',
+                            message: `Вы получили +${formatBalance(REWARD)} $NUT!`,
+                            buttonText: 'Круто!', bonusData: null
                         });
 
                     }).catch((result) => {
-                        // --- ОШИБКА или ПРОПУСК ---
-                        // Пользователь закрыл рекламу, не досмотрев, или произошла ошибка
-                        console.warn("Реклама не досмотрена или ошибка:", result);
+                        // --- ОШИБКА ПОКАЗА ---
+                        // Выводим ошибку на экран, чтобы вы поняли причину
+                        console.error(result);
                         
-                        // Таймер НЕ запускаем, даем возможность попробовать снова сразу
-                        // Можно вывести уведомление, если хочешь:
-                        // alert("Нужно досмотреть рекламу до конца, чтобы получить награду!");
-                    });
+                        // Adsgram возвращает объект ошибки. Попытаемся показать текст.
+                        let errorText = "Неизвестная ошибка";
+                        if (result && result.description) errorText = result.description;
+                        else if (result && result.error) errorText = result.error;
+                        else if (typeof result === 'string') errorText = result;
+                        else errorText = JSON.stringify(result);
 
-                } else {
-                    alert("Библиотека рекламы еще не загрузилась. Попробуйте через пару секунд.");
+                        alert("Не удалось запустить рекламу:\n" + errorText);
+                    });
+                    
+                } catch (e) {
+                    alert("Критическая ошибка запуска: " + e.message);
                 }
             };
 
